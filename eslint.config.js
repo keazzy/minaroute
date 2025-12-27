@@ -6,5 +6,37 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+          alwaysTryTypes: true,
+        },
+        node: {
+          extensions: [
+            '.js',
+            '.jsx',
+            '.ts',
+            '.tsx',
+            '.native.js',
+            '.native.jsx',
+            '.native.ts',
+            '.native.tsx',
+            '.ios.js',
+            '.ios.jsx',
+            '.ios.ts',
+            '.ios.tsx',
+            '.android.js',
+            '.android.jsx',
+            '.android.ts',
+            '.android.tsx',
+            '.web.js',
+            '.web.jsx',
+            '.web.ts',
+            '.web.tsx',
+          ],
+        },
+      },
+    },
   },
 ]);
