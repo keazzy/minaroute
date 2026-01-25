@@ -33,6 +33,7 @@
     "expo-image": "3.1.0-canary-20260114-d8e19f5",
     "expo-linking": "8.0.12-canary-20260114-d8e19f5",
     "expo-location": "19.1.0-canary-20260114-d8e19f5",
+    "expo-maps": "0.13.0-canary-20260114-d8e19f5",
     "expo-router": "7.0.0-canary-20260114-d8e19f5",
     "expo-secure-store": "15.0.9-canary-20260114-d8e19f5",
     "expo-splash-screen": "31.0.14-canary-20260114-d8e19f5",

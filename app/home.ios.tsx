@@ -1,5 +1,6 @@
 // iOS-specific home screen with native SwiftUI bottom sheet
 import EventDetailsContent from '@/components/event-details-content';
+import { Glass } from '@/components/Glass';
 import { HomeSheetContent } from '@/components/HomeSheetContent';
 import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
@@ -10,6 +11,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionSheetIOS, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -150,6 +152,7 @@ export default function HomeScreen() {
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<ExpoLocation.PermissionStatus | null>(null);
   const [homeSheetReady, setHomeSheetReady] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapBearing, setMapBearing] = useState(0);
 
   const snapPoints = useMemo(() => {
     const collapsed = Math.max(280, windowHeight * 0.45);
@@ -224,10 +227,13 @@ export default function HomeScreen() {
 
   const restoreHomeSheet = useCallback(() => {
     const index = homeSheetIndexRef.current;
-    homeSheetRef.current?.present();
-    requestAnimationFrame(() => {
-      homeSheetRef.current?.snapToIndex(index >= 0 ? index : 0);
-    });
+    // Delay to allow dismiss animation to complete before presenting
+    setTimeout(() => {
+      homeSheetRef.current?.present();
+      requestAnimationFrame(() => {
+        homeSheetRef.current?.snapToIndex(index >= 0 ? index : 0);
+      });
+    }, 100);
   }, []);
 
   const handleSubmitPlaceExplainerDismiss = useCallback(() => {
@@ -551,6 +557,7 @@ export default function HomeScreen() {
         initialRegion={INITIAL_REGION}
         showsUserLocation={locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED}
         showsMyLocationButton={false}
+        onCameraMove={(event) => setMapBearing(event.bearing)}
       >
         {places.map((location) => (
           <Marker
@@ -558,7 +565,7 @@ export default function HomeScreen() {
             coordinate={location.coordinate}
             title={location.name}
             description={location.type}
-            onPress={() => handleMarkerPress(location)}
+            onPress={() => handleLocationItemPress(location)}
             pinColor={selectedLocationId === location.id ? Colors.light.tint : 'red'}
           />
         ))}
@@ -626,6 +633,37 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Custom My Location Button - positioned above home sheet, behind it in z-index */}
+      {locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED && userCoords && (
+        <TouchableOpacity
+          style={[
+            styles.mapControlButton,
+            { 
+              bottom: snapPoints[0] - 40, // Position just above the collapsed home sheet
+              right: 16,
+              zIndex: 0, // Behind the sheet
+            }
+          ]}
+          onPress={() => {
+            mapRef.current?.animateToRegion({
+              latitude: userCoords.latitude,
+              longitude: userCoords.longitude,
+              latitudeDelta: 0.02,
+              longitudeDelta: 0.02,
+            });
+          }}
+          activeOpacity={0.8}
+        >
+          <Glass style={styles.mapControlButtonGlass} glassStyle="regular">
+            <SymbolView
+              name="location.fill"
+              tintColor="#007AFF"
+              style={{ width: 22, height: 22 }}
+            />
+          </Glass>
+        </TouchableOpacity>
+      )}
 
       {/* Home Sheet with pure SwiftUI content */}
       <NativeSheet
@@ -698,6 +736,23 @@ export default function HomeScreen() {
         onDismiss={handlePlaceDetailsDismiss}
         enableBackdropDismiss
       >
+        <TouchableOpacity
+          style={styles.sheetCloseButton}
+          onPress={() => {
+            placeDetailsSheetRef.current?.dismiss();
+            // Manually trigger dismiss handler since programmatic dismiss doesn't fire onDismiss
+            setSelectedPlace(null);
+            restoreHomeSheet();
+          }}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <SymbolView
+            name="xmark.circle.fill"
+            tintColor="#c7c7cc"
+            style={{ width: 40, height: 40 }}
+          />
+        </TouchableOpacity>
         <BottomSheetScrollView contentContainerStyle={styles.placeDetailsContent}>
           <TouchableOpacity style={styles.openInMapsButton} onPress={handleOpenInMaps}>
             <Text style={styles.openInMapsButtonText}>Open in Maps</Text>
@@ -842,7 +897,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  mapControlButton: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  mapControlButtonGlass: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetCloseButton: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    zIndex: 10,
+  },
   placeDetailsContent: {
+    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
