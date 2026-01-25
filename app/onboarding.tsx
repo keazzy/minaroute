@@ -6,10 +6,10 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ASSETS = {
-  illustration: 'https://www.figma.com/api/mcp/asset/9a40516a-c097-4d3b-a286-0d7c01d2cfec',
+  illustration: require('../assets/images/app/illustration.png'),
 };
 
-const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
+const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -29,7 +29,7 @@ export default function OnboardingScreen() {
         </View>
 
         <View style={styles.illustrationContainer}>
-          <Image source={{ uri: ASSETS.illustration }} style={styles.illustration} contentFit="contain" />
+          <Image source={ASSETS.illustration} style={styles.illustration} contentFit="contain" />
         </View>
 
         <Text style={styles.privacyText}>

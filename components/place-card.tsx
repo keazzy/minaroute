@@ -1,13 +1,15 @@
-import { Image } from 'expo-image';
+import { Image, ImageSource } from 'expo-image';
 import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export type CardType = 'Mosque' | 'School' | 'Event' | 'Halal Food';
 
-const CARD_IMAGES: Record<Exclude<CardType, 'Halal Food'>, string> = {
-  Mosque: 'https://www.figma.com/api/mcp/asset/8d90a6e9-2168-4a93-83f1-ba3c07915c25',
-  School: 'https://www.figma.com/api/mcp/asset/845e89c3-45e5-44b8-b972-578eca0cd609',
-  Event: 'https://www.figma.com/api/mcp/asset/c43b3cc1-7062-4bb3-bc78-77be8247b7ad',
+// Fallback images for place cards when no photo is provided (local assets)
+const CARD_IMAGES: Record<CardType, ImageSource> = {
+  Mosque: require('../assets/images/app/mosque.png'),
+  School: require('../assets/images/app/school.png'),
+  Event: require('../assets/images/app/event.png'),
+  'Halal Food': require('../assets/images/app/mosque.png'), // Using mosque as placeholder until halal food asset is added
 };
 
 type Props = {
@@ -30,11 +32,15 @@ function estimatePillWidth(label: string) {
 export default function PlaceCard({ title, subtitle, type, distanceLabel, tags = [], onPress, imageUri: preferredImageUri }: Props) {
   const [badgesWidth, setBadgesWidth] = useState<number>(0);
 
-  const imageUri = useMemo(() => {
-    const normalizedPreferred = typeof preferredImageUri === 'string' ? preferredImageUri.trim() : '';
-    if (normalizedPreferred) return normalizedPreferred;
-    if (type === 'Halal Food') return null;
-    return CARD_IMAGES[type as Exclude<CardType, 'Halal Food'>] ?? null;
+  // Get the image source - prefer database photo URL, fall back to local asset by type
+  const imageSource = useMemo((): ImageSource => {
+    const trimmed = typeof preferredImageUri === 'string' ? preferredImageUri.trim() : '';
+    // If we have a valid URL from database, use it
+    if (trimmed) {
+      return { uri: trimmed };
+    }
+    // Otherwise use local asset fallback
+    return CARD_IMAGES[type];
   }, [preferredImageUri, type]);
 
   const distancePill = distanceLabel ? `📍 ${distanceLabel}` : '';
@@ -92,11 +98,13 @@ export default function PlaceCard({ title, subtitle, type, distanceLabel, tags =
   return (
     <Wrapper style={styles.card} activeOpacity={0.85} onPress={onPress as any}>
       <View style={styles.imageContainer}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />
-        ) : (
-          <View style={styles.fallbackImage} />
-        )}
+        <Image
+          source={imageSource}
+          style={styles.image}
+          contentFit="cover"
+          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+          transition={200}
+        />
       </View>
 
       <View style={styles.body}>
@@ -152,15 +160,11 @@ const styles = StyleSheet.create({
     height: 86,
     borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: '#e8e8e8', // Placeholder color while loading
   },
   image: {
     width: 86,
     height: 86,
-  },
-  fallbackImage: {
-    width: 86,
-    height: 86,
-    backgroundColor: '#ececec',
   },
   body: {
     flex: 1,

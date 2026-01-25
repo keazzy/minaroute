@@ -1,8 +1,10 @@
 export interface Category {
   id: string;
   name: string;
-  icon: string; // Emoji for now, or image url
+  icon: string; // Emoji fallback
+  image?: any; // require() image for card background
   color: string;
+  textColor?: string; // Text color, defaults to white
 }
 
 export interface Location {
@@ -19,30 +21,41 @@ export interface Location {
   image: string;
 }
 
+// Category card images from assets
+const CATEGORY_IMAGES = {
+  mosque: require('../assets/images/app/mosque.png'),
+  school: require('../assets/images/app/school.png'),
+  event: require('../assets/images/app/event.png'),
+};
+
 export const CATEGORIES: Category[] = [
   {
     id: '1',
-    name: 'Mosque',
+    name: 'Mosques',
     icon: '🕌',
-    color: '#E6F4FE',
+    image: CATEGORY_IMAGES.mosque,
+    color: '#59B56C',
   },
   {
     id: '2',
-    name: 'Halal Food',
-    icon: '🍲',
-    color: '#FFF4E6',
+    name: 'Islamic Schools',
+    icon: '📚',
+    image: CATEGORY_IMAGES.school,
+    color: '#8252A8',
   },
   {
     id: '3',
-    name: 'Islamic School',
-    icon: '📚',
-    color: '#E6FFFA',
+    name: 'Events',
+    icon: '📅',
+    image: CATEGORY_IMAGES.event,
+    color: '#FFA441',
+    textColor: '#804200',
   },
   {
     id: '4',
-    name: 'Events',
-    icon: '📅',
-    color: '#F3E6FF',
+    name: 'Halal Food',
+    icon: '🍲',
+    color: '#E67E22',
   },
 ];
 

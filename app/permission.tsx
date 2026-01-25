@@ -7,10 +7,10 @@ import { ActivityIndicator, Button, Linking, Platform, StyleSheet, Text, Touchab
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ASSETS = {
-  illustration: 'https://www.figma.com/api/mcp/asset/5472a187-9478-427d-bad2-0a3aed21c173',
+  illustration: require('../assets/images/app/illustration.png'),
 };
 
-const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v1';
+const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 
 export default function PermissionScreen() {
   const insets = useSafeAreaInsets();
@@ -91,7 +91,7 @@ export default function PermissionScreen() {
         </View>
 
         <View style={styles.illustrationContainer}>
-          <Image source={{ uri: ASSETS.illustration }} style={styles.illustration} contentFit="contain" />
+          <Image source={ASSETS.illustration} style={styles.illustration} contentFit="contain" />
         </View>
 
         <Text style={styles.privacyText}>

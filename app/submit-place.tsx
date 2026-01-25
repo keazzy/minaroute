@@ -1,5 +1,5 @@
 import { CATEGORIES } from '@/constants/mockData';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { NativeSheet, NativeSheetRef, BottomSheetScrollView } from '@/components/NativeSheet';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -90,7 +90,7 @@ export default function SubmitPlaceScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
-  const categorySheetRef = useRef<BottomSheetModal>(null);
+  const categorySheetRef = useRef<NativeSheetRef>(null);
   const pickerSheetSnapPoints = useMemo(() => ['45%'], []);
 
   const [type, setType] = useState<SubmissionType>('place');
@@ -309,13 +309,6 @@ export default function SubmitPlaceScreen() {
     categorySheetRef.current?.present();
   }, [categoryOptions]);
 
-  const renderPickerBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.25} pressBehavior="close" />
-    ),
-    []
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={[styles.header, { paddingTop: 8 }]}>
@@ -500,13 +493,12 @@ export default function SubmitPlaceScreen() {
         </View>
       )}
 
-      <BottomSheetModal
+      <NativeSheet
         ref={categorySheetRef}
         index={0}
         snapPoints={pickerSheetSnapPoints}
         backgroundStyle={styles.pickerSheetBackground}
-        handleIndicatorStyle={styles.bottomSheetIndicator}
-        backdropComponent={renderPickerBackdrop}
+        enableBackdropDismiss
       >
         <BottomSheetScrollView contentContainerStyle={styles.pickerSheetContent}>
           <Text style={styles.pickerSheetTitle}>Category</Text>
@@ -538,7 +530,7 @@ export default function SubmitPlaceScreen() {
             </TouchableOpacity>
           ))}
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </NativeSheet>
     </SafeAreaView>
   );
 }

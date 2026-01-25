@@ -4,8 +4,8 @@ import { Redirect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
-const ONBOARDING_SEEN_KEY = 'onboarding_seen_v1';
-const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v1';
+const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
+const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 
 export default function EntryRouter() {
   const [destination, setDestination] = useState<'onboarding' | 'permission' | 'home' | null>(null);

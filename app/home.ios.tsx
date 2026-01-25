@@ -1,9 +1,9 @@
-import CategoryCard from '@/components/CategoryCard';
+// iOS-specific home screen with native SwiftUI bottom sheet
 import EventDetailsContent from '@/components/event-details-content';
-import { BottomSheetFlatList, BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
-import PlaceCard from '@/components/place-card';
+import { HomeSheetContent } from '@/components/HomeSheetContent';
+import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
-import { CATEGORIES, Category, Location } from '@/constants/mockData';
+import { Location } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
 import { Colors } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
@@ -11,16 +11,11 @@ import { Image } from 'expo-image';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionSheetIOS, Animated, Easing, FlatList, Linking, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActionSheetIOS, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapViewHandle } from '../components/map';
-import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from '../components/map';
-
-// SwiftUI components from @expo/ui - requires Host wrapper for iOS 26+
-// TODO: SwiftUI glassEffect button - revisit later (systemImage not rendering with glassEffect)
-// import { Host, Button as SwiftUIButton } from '@expo/ui/swift-ui';
-// import { glassEffect } from '@expo/ui/swift-ui/modifiers';
+import MapView, { Marker, PROVIDER_DEFAULT } from '../components/map';
 
 const INITIAL_REGION = {
   latitude: 6.6018,
@@ -94,7 +89,6 @@ function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-// Assets from Figma
 const ASSETS = {
   avatar: require('../assets/images/app/avatar-head.png'),
   avatarHead: require('../assets/images/app/avatar-head.png'),
@@ -132,60 +126,6 @@ function MingcuteIcon({
   );
 }
 
-function ShimmerBlock({ style }: { style?: any }) {
-  const shimmer = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(shimmer, {
-        toValue: 1,
-        duration: 1100,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      })
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [shimmer]);
-
-  const translateX = shimmer.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-120, 120],
-  });
-
-  return (
-    <View style={[styles.skeletonBase, style]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.skeletonShimmer,
-          {
-            transform: [{ translateX }],
-          },
-        ]}
-      />
-    </View>
-  );
-}
-
-function NearbySkeletonCard() {
-  return (
-    <View style={styles.locationCard}>
-      <ShimmerBlock style={styles.skeletonImage} />
-      <View style={styles.locationInfo}>
-        <View>
-          <ShimmerBlock style={styles.skeletonLinePrimary} />
-          <ShimmerBlock style={styles.skeletonLineSecondary} />
-        </View>
-        <View style={styles.locationMeta}>
-          <ShimmerBlock style={styles.skeletonBadge} />
-          <ShimmerBlock style={styles.skeletonBadge} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
 export default function HomeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ placeId?: string }>();
@@ -211,7 +151,6 @@ export default function HomeScreen() {
   const [homeSheetReady, setHomeSheetReady] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
-  // Snap points for the bottom sheet
   const snapPoints = useMemo(() => {
     const collapsed = Math.max(280, windowHeight * 0.45);
     const topGap = insets.top + 120;
@@ -221,7 +160,6 @@ export default function HomeScreen() {
   const detailsSnapPoints = useMemo(() => ['90%'], []);
   const eventDetailsSnapPoints = useMemo(() => ['90%'], []);
   const submitPlaceSnapPoints = useMemo(() => ['90%'], []);
-
 
   const handleSheetChanges = useCallback((index: number) => {
     console.log('handleSheetChanges', index);
@@ -328,7 +266,6 @@ export default function HomeScreen() {
   const handlePlaceDetailsDismiss = useCallback(() => {
     setSelectedPlace(null);
     restoreHomeSheet();
-    // Recenter map to user location when closing place details
     if (userCoords && locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED) {
       mapRef.current?.animateToRegion({
         latitude: userCoords.latitude,
@@ -347,19 +284,7 @@ export default function HomeScreen() {
     const label = encodeURIComponent(selectedPlace.name);
     const appleUrl = `http://maps.apple.com/?ll=${lat},${lng}&q=${label}`;
     const googleWebUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    const androidGeoUrl = `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
     const googleAppUrl = `comgooglemaps://?q=${label}&center=${lat},${lng}`;
-
-    if (Platform.OS === 'web') {
-      try {
-        await Linking.openURL(googleWebUrl);
-      } catch {
-        if (typeof window !== 'undefined') {
-          window.open(googleWebUrl, '_blank', 'noopener,noreferrer');
-        }
-      }
-      return;
-    }
 
     const openApple = async () => {
       try {
@@ -378,29 +303,20 @@ export default function HomeScreen() {
       }
     };
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Apple Maps', 'Google Maps', 'Cancel'],
-          cancelButtonIndex: 2,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 0) {
-            void openApple();
-          }
-          if (buttonIndex === 1) {
-            void openGoogle();
-          }
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['Apple Maps', 'Google Maps', 'Cancel'],
+        cancelButtonIndex: 2,
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) {
+          void openApple();
         }
-      );
-      return;
-    }
-
-    try {
-      await Linking.openURL(androidGeoUrl);
-    } catch {
-      await Linking.openURL(googleWebUrl);
-    }
+        if (buttonIndex === 1) {
+          void openGoogle();
+        }
+      }
+    );
   }, [selectedPlace]);
 
   const handleLocationItemPress = (location: Place) => {
@@ -596,42 +512,6 @@ export default function HomeScreen() {
     }, [deepLinkPlaceId, homeSheetReady, selectedEvent, selectedPlace])
   );
 
-  const renderCategoryItem = useCallback(
-    ({ item }: { item: Category }) => (
-      <CategoryCard
-        category={item}
-        onPress={() => openSearchResults({ category: item.name })}
-      />
-    ),
-    [openSearchResults]
-  );
-
-  const homeListHeader = useMemo(() => {
-    return (
-      <View>
-        <View style={styles.greetingContainer}>
-           <Text style={styles.greetingText}>As salam alykum</Text>
-           <Text style={styles.subGreetingText}>What would you like you find today?</Text>
-        </View>
-
-        <View style={styles.categoriesContainer}>
-          <FlatList
-            data={CATEGORIES}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoriesList}
-          />
-        </View>
-
-        <View style={styles.locationsHeaderContainer}>
-          <Text style={styles.locationsHeader}>Based on your location</Text>
-        </View>
-      </View>
-    );
-  }, [renderCategoryItem]);
-
   const nearbyPlaces = useMemo(() => {
     if (locationPermissionStatus !== ExpoLocation.PermissionStatus.GRANTED) return places;
     if (!userCoords) return places;
@@ -649,57 +529,25 @@ export default function HomeScreen() {
       .map((x) => x.place);
   }, [locationPermissionStatus, places, userCoords]);
 
-  const homeListItems = useMemo(() => {
-    if (placesLoading) return [] as HomeListItem[];
-    if (locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED && userCoords) {
-      return [...(nearbyPlaces as HomeListItem[]), ...events];
+  // Handler for category press from SwiftUI HomeSheetContent
+  const handleCategoryPress = useCallback((categoryName: string) => {
+    openSearchResults({ category: categoryName });
+  }, [openSearchResults]);
+
+  // Handler for place press from SwiftUI HomeSheetContent
+  const handlePlacePress = useCallback((place: { id: string }) => {
+    const fullPlace = nearbyPlaces.find(p => p.id === place.id);
+    if (fullPlace) {
+      handleLocationItemPress(fullPlace);
     }
-    return [...(places as HomeListItem[]), ...events];
-  }, [events, locationPermissionStatus, nearbyPlaces, places, placesLoading, userCoords]);
-
-  const renderLocationItem = ({ item }: { item: HomeListItem }) => {
-    const distanceLabel = (() => {
-      if (item.type === 'Event') return undefined;
-      if (locationPermissionStatus !== ExpoLocation.PermissionStatus.GRANTED) return undefined;
-      if (!userCoords) return '—';
-
-      const coord = (item as Place).coordinate;
-      const km = haversineKm(userCoords, coord);
-      if (!Number.isFinite(km)) return '—';
-      if (km <= 2) return `${km.toFixed(1)}km away`;
-      if (km <= 5) return 'Near me';
-      return '—';
-    })();
-
-    return (
-      <PlaceCard
-        title={item.name}
-        subtitle={item.type === 'Event' ? item.description : item.address}
-        type={item.type}
-        distanceLabel={distanceLabel}
-        tags={item.tags}
-        imageUri={item.image}
-        onPress={() => {
-          if (item.type === 'Event') {
-            setSelectedEvent(item as Extract<HomeListItem, { type: 'Event' }>);
-            homeSheetRef.current?.dismiss();
-            requestAnimationFrame(() => {
-              eventDetailsSheetRef.current?.present();
-            });
-            return;
-          }
-          handleLocationItemPress(item as Place);
-        }}
-      />
-    );
-  };
+  }, [nearbyPlaces]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+        provider={PROVIDER_DEFAULT}
         initialRegion={INITIAL_REGION}
         showsUserLocation={locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED}
         showsMyLocationButton={false}
@@ -755,11 +603,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.locationDeniedCtaButton}
               onPress={() => {
-                if (Platform.OS === 'ios' || Platform.OS === 'android') {
-                  void Linking.openSettings();
-                  return;
-                }
-                void requestForegroundPermission();
+                void Linking.openSettings();
               }}
               activeOpacity={0.8}
             >
@@ -783,6 +627,7 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Home Sheet with pure SwiftUI content */}
       <NativeSheet
         ref={homeSheetRef}
         index={0}
@@ -792,38 +637,21 @@ export default function HomeScreen() {
         enablePanDownToClose={false}
         enableOverDrag={false}
         topInset={insets.top}
+        allowFullExpansion={false}
       >
-        <BottomSheetFlatList<HomeListItem>
-          data={homeListItems}
-          keyExtractor={(item: HomeListItem) => item.id}
-          renderItem={({ item }: { item: HomeListItem }) => (
-            <View style={{ marginBottom: 12, paddingHorizontal: 20 }}>{renderLocationItem({ item })}</View>
-          )}
-          ListHeaderComponent={homeListHeader}
-          ListFooterComponent={<View style={{ height: 40 }} />}
-          contentContainerStyle={styles.homeSheetListContent}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          overScrollMode="never"
-          ListEmptyComponent={
-            placesLoading ? (
-              <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
-                <NearbySkeletonCard />
-                <View style={{ height: 12 }} />
-                <NearbySkeletonCard />
-                <View style={{ height: 12 }} />
-                <NearbySkeletonCard />
-              </View>
-            ) : locationPermissionStatus === ExpoLocation.PermissionStatus.DENIED ? (
-              <View style={styles.listStateContainer}>
-                <Text style={styles.listStateTitle}>Turn on location to see nearby places.</Text>
-              </View>
-            ) : (
-              <View style={styles.listStateContainer}>
-                <Text style={styles.listStateTitle}>No places nearby yet.</Text>
-              </View>
-            )
-          }
+        <HomeSheetContent
+          places={nearbyPlaces.map(p => ({
+            id: p.id,
+            name: p.name,
+            address: p.address || '',
+            type: p.type,
+            distance: userCoords ? `${haversineKm(userCoords, p.coordinate).toFixed(1)}km` : undefined,
+            image: p.image,
+            tags: p.tags,
+          }))}
+          isLoading={placesLoading}
+          onCategoryPress={handleCategoryPress}
+          onPlacePress={handlePlacePress}
         />
       </NativeSheet>
 
@@ -859,7 +687,6 @@ export default function HomeScreen() {
         enableBackdropDismiss
         expandedOnly
       >
-        {/* On iOS, SubmitPlaceSheetContent renders SwiftUI content */}
         <SubmitPlaceSheetContent onSubmitPress={handleSubmitPlacePress} />
       </NativeSheet>
 
@@ -905,89 +732,6 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
-  },
-  permissionOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0850FD',
-    zIndex: 100,
-  },
-  permissionContent: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingBottom: 24,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  permissionTextContainer: {
-    marginTop: 140,
-    alignItems: 'center',
-    gap: 8,
-  },
-  permissionTitle: {
-    fontSize: 32,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Quicksand_700Bold',
-  },
-  permissionSubtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    opacity: 0.95,
-    fontFamily: 'Quicksand_500Medium',
-  },
-  permissionIllustrationContainer: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  permissionIllustration: {
-    width: 375,
-    height: 316,
-  },
-  permissionPrivacyText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    maxWidth: 286,
-    fontFamily: 'Quicksand_500Medium',
-  },
-  permissionButtonsContainer: {
-    width: '100%',
-    gap: 10,
-  },
-  permissionNativeButtonRow: {
-    backgroundColor: '#F9F7F2',
-    borderRadius: 999,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-  },
-  permissionPrimaryButton: {
-    backgroundColor: '#F9F7F2',
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  permissionPrimaryButtonText: {
-    fontSize: 16,
-    color: '#000000',
-    textAlign: 'center',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  permissionSecondaryButton: {
-    borderRadius: 999,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  permissionSecondaryButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Quicksand_500Medium',
   },
   headerContainer: {
     position: 'absolute',
@@ -1086,10 +830,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  settingsIcon: {
-    width: 24,
-    height: 24,
-  },
   bottomSheetBackground: {
     backgroundColor: '#fff',
     borderRadius: 32,
@@ -1102,211 +842,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  bottomSheetIndicator: {
-    backgroundColor: '#E5E5E5',
-    width: 36,
-  },
-  homeSheetScrollContent: {
-    paddingBottom: 20,
-  },
-  homeSheetListContent: {
-    paddingBottom: 20,
-  },
-  greetingContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    marginBottom: 16,
-  },
-  greetingText: {
-    fontSize: 18,
-    color: '#0c0c0f',
-    marginBottom: 4,
-    fontFamily: 'Quicksand_700Bold',
-  },
-  subGreetingText: {
-    fontSize: 14,
-    color: '#454745',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  categoriesContainer: {
-    marginBottom: 24,
-  },
-  categoriesList: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  categoryItem: {
-    width: 140,
-    height: 150,
-    borderRadius: 24,
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  categoryIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categoryIcon: {
-    fontSize: 24,
-  },
-  categoryName: {
-    fontSize: 16,
-    color: '#0c0c0f',
-    fontFamily: 'Quicksand_700Bold',
-  },
-  locationsHeaderContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  locationsHeader: {
-    fontSize: 18,
-    color: '#0c0c0f',
-    fontFamily: 'Quicksand_700Bold',
-  },
-  locationsList: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  emptyStateText: {
-    paddingVertical: 12,
-    color: '#454745',
-    fontSize: 14,
-    fontFamily: 'Quicksand_500Medium',
-  },
-  listStateContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-    alignItems: 'center',
-  },
-  listStateTitle: {
-    fontSize: 14,
-    color: '#454745',
-    textAlign: 'center',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  listStateButton: {
-    marginTop: 10,
-    backgroundColor: '#0c0c0f',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
-  listStateButtonText: {
-    fontSize: 13,
-    color: '#fff',
-    fontFamily: 'Quicksand_700Bold',
-  },
   placeDetailsContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
-  },
-  submitPlaceSheetContent: {
-    paddingBottom: 24,
-  },
-  submitPlaceHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-    alignItems: 'center',
-    gap: 4,
-  },
-  submitPlaceTitle: {
-    fontSize: 26,
-    lineHeight: 32,
-    color: '#000',
-    fontFamily: 'Quicksand_700Bold',
-    textAlign: 'center',
-  },
-  submitPlaceSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#454745',
-    fontFamily: 'Quicksand_500Medium',
-    textAlign: 'center',
-    maxWidth: 295,
-  },
-  submitPlaceImageWrap: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  submitPlaceImage: {
-    width: '100%',
-    height: 183,
-    borderRadius: 14,
-    backgroundColor: '#f2f2f2',
-  },
-  submitPlaceSectionHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  submitPlaceSectionTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: '#000',
-    fontFamily: 'Quicksand_700Bold',
-    textAlign: 'center',
-  },
-  submitPlaceSteps: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    gap: 24,
-  },
-  submitPlaceStepRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  submitPlaceStepBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitPlaceStepBadgeText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Quicksand_700Bold',
-  },
-  submitPlaceStepTextWrap: {
-    flex: 1,
-    gap: 4,
-  },
-  submitPlaceStepTitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#000',
-    fontFamily: 'Quicksand_700Bold',
-  },
-  submitPlaceStepSubtitle: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#454745',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  submitPlaceButtonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 12,
-  },
-  submitPlaceButton: {
-    height: 48,
-    borderRadius: 999,
-    backgroundColor: '#0C6FF9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitPlaceButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Quicksand_500Medium',
   },
   openInMapsButton: {
     alignSelf: 'flex-start',
@@ -1359,84 +897,6 @@ const styles = StyleSheet.create({
   },
   eventDetailsContent: {
     paddingBottom: 24,
-  },
-  locationCard: {
-    flexDirection: 'row',
-    backgroundColor: '#f9f6f4', 
-    borderRadius: 24,
-    padding: 8,
-    height: 102,
-    gap: 12,
-  },
-  locationImage: {
-    width: 86,
-    height: 86,
-    borderRadius: 18,
-    backgroundColor: '#ccc',
-  },
-  locationInfo: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  locationName: {
-    fontSize: 16,
-    color: '#0c0c0f',
-    marginBottom: 4,
-    fontFamily: 'Quicksand_700Bold',
-  },
-  locationAddress: {
-    fontSize: 13, // Slightly smaller to fit
-    color: '#454745',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  locationMeta: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  locationBadge: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  locationBadgeText: {
-    fontSize: 12,
-    color: '#0c0c0f',
-    fontFamily: 'Quicksand_500Medium',
-  },
-  skeletonBase: {
-    backgroundColor: '#ececec',
-    overflow: 'hidden',
-  },
-  skeletonShimmer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 80,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    opacity: 0.9,
-  },
-  skeletonImage: {
-    width: 86,
-    height: 86,
-    borderRadius: 18,
-  },
-  skeletonLinePrimary: {
-    height: 14,
-    width: '70%',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  skeletonLineSecondary: {
-    height: 12,
-    width: '55%',
-    borderRadius: 8,
-  },
-  skeletonBadge: {
-    height: 20,
-    width: 70,
-    borderRadius: 12,
   },
   devResetButton: {
     backgroundColor: '#ff4444',
