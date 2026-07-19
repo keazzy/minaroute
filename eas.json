@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       },
@@ -14,8 +15,15 @@
         "simulator": false
       }
     },
+    "development-simulator": {
+      "extends": "development",
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       },
@@ -25,6 +33,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "env": {
         "NPM_CONFIG_LEGACY_PEER_DEPS": "true"
       }

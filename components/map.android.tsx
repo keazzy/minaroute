@@ -43,8 +43,6 @@ type MapViewProps = {
 
 // Convert latitudeDelta to approximate zoom level
 function deltaToZoom(latitudeDelta: number): number {
-  // Rough approximation: zoom = log2(360 / latitudeDelta)
-  // Clamped between 1 and 20
   const zoom = Math.log2(360 / latitudeDelta);
   return Math.max(1, Math.min(20, zoom));
 }
@@ -64,14 +62,19 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
   const mapRef = useRef<GoogleMaps.MapView>(null);
 
   useImperativeHandle(ref, () => ({
-    animateToRegion: (region) => {
-      mapRef.current?.setCameraPosition({
-        coordinates: {
-          latitude: region.latitude,
-          longitude: region.longitude,
-        },
-        zoom: deltaToZoom(region.latitudeDelta ?? 0.05),
-      });
+    animateToRegion: async (region) => {
+      try {
+        await mapRef.current?.setCameraPosition({
+          coordinates: {
+            latitude: region.latitude,
+            longitude: region.longitude,
+          },
+          zoom: deltaToZoom(region.latitudeDelta ?? 0.05),
+        });
+      } catch (error) {
+        // Ignore animation cancellation errors (e.g., user interaction during animation)
+        console.debug('Map animation cancelled:', error);
+      }
     },
   }));
 

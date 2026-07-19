@@ -1,5 +1,6 @@
+import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import { CATEGORIES } from '@/constants/mockData';
-import { NativeSheet, NativeSheetRef, BottomSheetScrollView } from '@/components/NativeSheet';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -89,6 +90,23 @@ export default function SubmitPlaceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const dynamicColors = useMemo(() => ({
+    background: isDark ? '#151718' : '#fff',
+    text: isDark ? '#fff' : '#000',
+    textSecondary: isDark ? '#9BA1A6' : '#454745',
+    border: isDark ? 'rgba(255,255,255,0.12)' : '#EBEBEF',
+    inputBg: isDark ? '#2a2a2a' : '#fff',
+    placeholder: isDark ? '#9BA1A6' : '#7a7a85',
+    noteBg: isDark ? 'rgba(139,69,19,0.15)' : '#FCEFE4',
+    noteText: isDark ? '#D4A574' : '#8B4513',
+    segmentBg: isDark ? '#2a2a2a' : '#F6F6F9',
+    segmentActiveBg: isDark ? '#3a3a3a' : '#fff',
+    submitBarBg: isDark ? 'rgba(21,23,24,0.96)' : 'rgba(255,255,255,0.96)',
+    sheetBg: isDark ? '#1c1c1e' : '#fff',
+  }), [isDark]);
 
   const categorySheetRef = useRef<NativeSheetRef>(null);
   const pickerSheetSnapPoints = useMemo(() => ['45%'], []);
@@ -310,17 +328,17 @@ export default function SubmitPlaceScreen() {
   }, [categoryOptions]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: dynamicColors.background }]}>
       <View style={[styles.header, { paddingTop: 8 }]}>
         <TouchableOpacity style={styles.headerIconButton} onPress={() => router.back()} activeOpacity={0.85}>
-          <Text style={styles.headerIcon}>←</Text>
+          <Text style={[styles.headerIcon, { color: dynamicColors.text }]}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Submit a place</Text>
+        <Text style={[styles.headerTitle, { color: dynamicColors.text }]}>Submit a place</Text>
         <View style={styles.headerIconButton} />
       </View>
 
-      <View style={styles.noteWrap}>
-        <Text style={styles.noteText}>
+      <View style={[styles.noteWrap, { backgroundColor: dynamicColors.noteBg }]}>
+        <Text style={[styles.noteText, { color: dynamicColors.noteText }]}>
           Note: Places you submit will be verified by the team to ensure accuracy and avoid data duplication. If a place you submit already
           exist we would review and update with the latest correct information.
         </Text>
@@ -340,100 +358,100 @@ export default function SubmitPlaceScreen() {
           >
 
             <View style={styles.field}>
-              <Text style={styles.label}>Type *</Text>
-              <View style={styles.segmentWrap}>
+              <Text style={[styles.label, { color: dynamicColors.text }]}>Type *</Text>
+              <View style={[styles.segmentWrap, { backgroundColor: dynamicColors.segmentBg, borderColor: dynamicColors.border }]}>
                 <TouchableOpacity
-                  style={[styles.segmentItem, type === 'place' && styles.segmentItemActive]}
+                  style={[styles.segmentItem, type === 'place' && [styles.segmentItemActive, { backgroundColor: dynamicColors.segmentActiveBg }]]}
                   onPress={() => setType('place')}
                   activeOpacity={0.85}
                 >
-                  <Text style={[styles.segmentText, type === 'place' && styles.segmentTextActive]}>Place</Text>
+                  <Text style={[styles.segmentText, { color: dynamicColors.textSecondary }, type === 'place' && styles.segmentTextActive]}>Place</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.segmentItem, type === 'event' && styles.segmentItemActive]}
+                  style={[styles.segmentItem, type === 'event' && [styles.segmentItemActive, { backgroundColor: dynamicColors.segmentActiveBg }]]}
                   onPress={() => setType('event')}
                   activeOpacity={0.85}
                 >
-                  <Text style={[styles.segmentText, type === 'event' && styles.segmentTextActive]}>Event</Text>
+                  <Text style={[styles.segmentText, { color: dynamicColors.textSecondary }, type === 'event' && styles.segmentTextActive]}>Event</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Title *</Text>
+              <Text style={[styles.label, { color: dynamicColors.text }]}>Title *</Text>
               <TextInput
                 value={title}
                 onChangeText={setTitle}
                 placeholder="name/title"
-                placeholderTextColor="#7a7a85"
-                style={styles.input}
+                placeholderTextColor={dynamicColors.placeholder}
+                style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
               />
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Category</Text>
+              <Text style={[styles.label, { color: dynamicColors.text }]}>Category</Text>
             <View style={styles.categoryRow}>
               <TextInput
                 value={category}
                 onChangeText={setCategory}
                 placeholder={type === 'event' ? 'Lecture, conference…' : 'Mosque, halal food…'}
-                placeholderTextColor="#7a7a85"
-                style={[styles.input, styles.categoryInput]}
+                placeholderTextColor={dynamicColors.placeholder}
+                style={[styles.input, styles.categoryInput, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
               />
-              <TouchableOpacity style={styles.categoryPickButton} onPress={openCategorySheet} activeOpacity={0.85}>
+              <TouchableOpacity style={[styles.categoryPickButton, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }]} onPress={openCategorySheet} activeOpacity={0.85}>
                 <Text style={styles.categoryPickButtonText}>Pick</Text>
               </TouchableOpacity>
             </View>
             </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Location name (optional)</Text>
+            <Text style={[styles.label, { color: dynamicColors.text }]}>Location name (optional)</Text>
             <TextInput
               value={locationName}
               onChangeText={setLocationName}
               placeholder={type === 'event' ? 'Venue name' : 'Location name'}
-              placeholderTextColor="#7a7a85"
-              style={styles.input}
+              placeholderTextColor={dynamicColors.placeholder}
+              style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>City *</Text>
-            <TextInput value={city} onChangeText={setCity} placeholder="City" placeholderTextColor="#7a7a85" style={styles.input} />
+            <Text style={[styles.label, { color: dynamicColors.text }]}>City *</Text>
+            <TextInput value={city} onChangeText={setCity} placeholder="City" placeholderTextColor={dynamicColors.placeholder} style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]} />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>State</Text>
-            <TextInput value={stateValue} onChangeText={setStateValue} placeholder="State" placeholderTextColor="#7a7a85" style={styles.input} />
+            <Text style={[styles.label, { color: dynamicColors.text }]}>State</Text>
+            <TextInput value={stateValue} onChangeText={setStateValue} placeholder="State" placeholderTextColor={dynamicColors.placeholder} style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]} />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={[styles.label, { color: dynamicColors.text }]}>Description</Text>
             <TextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Description"
-              placeholderTextColor="#7a7a85"
-              style={[styles.input, styles.multiline]}
+              placeholderTextColor={dynamicColors.placeholder}
+              style={[styles.input, styles.multiline, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
               multiline
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Tags</Text>
+            <Text style={[styles.label, { color: dynamicColors.text }]}>Tags</Text>
             <TextInput
               value={tagsRaw}
               onChangeText={setTagsRaw}
               placeholder="Tags (comma-separated)"
-              placeholderTextColor="#7a7a85"
-              style={styles.input}
+              placeholderTextColor={dynamicColors.placeholder}
+              style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
             />
-            <Text style={styles.helperText}>Tags (maximum 5). Separate tags by using comma</Text>
+            <Text style={[styles.helperText, { color: dynamicColors.textSecondary }]}>Tags (maximum 5). Separate tags by using comma</Text>
           </View>
 
           {type === 'place' && (
             <View style={styles.field}>
-              <Text style={styles.label}>Address (optional)</Text>
+              <Text style={[styles.label, { color: dynamicColors.text }]}>Address (optional)</Text>
               <TextInput
                 value={addressQuery}
                 onChangeText={(t) => {
@@ -442,25 +460,25 @@ export default function SubmitPlaceScreen() {
                   setCoords(null);
                 }}
                 placeholder="Start typing an address…"
-                placeholderTextColor="#7a7a85"
-                style={styles.input}
+                placeholderTextColor={dynamicColors.placeholder}
+                style={[styles.input, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border, color: dynamicColors.text }]}
               />
 
               <View style={styles.addressMetaRow}>
-                {addressLoading ? <ActivityIndicator size="small" /> : <View style={{ height: 16 }} />}
-                <Text style={styles.addressMetaText}>Suggestions powered by OpenStreetMap</Text>
+                {addressLoading ? <ActivityIndicator size="small" color={dynamicColors.textSecondary} /> : <View style={{ height: 16 }} />}
+                <Text style={[styles.addressMetaText, { color: dynamicColors.textSecondary }]}>Suggestions powered by OpenStreetMap</Text>
               </View>
 
               {showAddressDropdown && (
-                <View style={styles.suggestionsWrap}>
+                <View style={[styles.suggestionsWrap, { borderColor: dynamicColors.border }]}>
                   {addressSuggestions.map((item) => (
                     <TouchableOpacity
                       key={item.id}
-                      style={styles.suggestionItem}
+                      style={[styles.suggestionItem, { backgroundColor: dynamicColors.inputBg, borderBottomColor: dynamicColors.border }]}
                       onPress={() => void pickAddress(item)}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.suggestionText} numberOfLines={2}>
+                      <Text style={[styles.suggestionText, { color: dynamicColors.text }]} numberOfLines={2}>
                         {item.display_name}
                       </Text>
                     </TouchableOpacity>
@@ -473,7 +491,7 @@ export default function SubmitPlaceScreen() {
           </ScrollView>
         </View>
 
-        <View style={[styles.submitBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[styles.submitBar, { paddingBottom: Math.max(insets.bottom, 16), backgroundColor: dynamicColors.submitBarBg, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
           <TouchableOpacity
             onPress={() => void submit()}
             style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
@@ -497,35 +515,35 @@ export default function SubmitPlaceScreen() {
         ref={categorySheetRef}
         index={0}
         snapPoints={pickerSheetSnapPoints}
-        backgroundStyle={styles.pickerSheetBackground}
+        backgroundStyle={[styles.pickerSheetBackground, { backgroundColor: dynamicColors.sheetBg }]}
         enableBackdropDismiss
       >
         <BottomSheetScrollView contentContainerStyle={styles.pickerSheetContent}>
-          <Text style={styles.pickerSheetTitle}>Category</Text>
+          <Text style={[styles.pickerSheetTitle, { color: dynamicColors.text }]}>Category</Text>
 
           <TouchableOpacity
-            style={[styles.pickerOptionRow, !category && styles.pickerOptionRowSelected]}
+            style={[styles.pickerOptionRow, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }, !category && styles.pickerOptionRowSelected]}
             onPress={() => {
               setCategory('');
               categorySheetRef.current?.dismiss();
             }}
             activeOpacity={0.85}
           >
-            <Text style={styles.pickerOptionText}>Select category</Text>
+            <Text style={[styles.pickerOptionText, { color: dynamicColors.text }]}>Select category</Text>
             {!category && <Text style={styles.pickerOptionCheck}>✓</Text>}
           </TouchableOpacity>
 
           {categoryOptions.map((name) => (
             <TouchableOpacity
               key={name}
-              style={[styles.pickerOptionRow, category === name && styles.pickerOptionRowSelected]}
+              style={[styles.pickerOptionRow, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }, category === name && styles.pickerOptionRowSelected]}
               onPress={() => {
                 setCategory(name);
                 categorySheetRef.current?.dismiss();
               }}
               activeOpacity={0.85}
             >
-              <Text style={styles.pickerOptionText}>{name}</Text>
+              <Text style={[styles.pickerOptionText, { color: dynamicColors.text }]}>{name}</Text>
               {category === name && <Text style={styles.pickerOptionCheck}>✓</Text>}
             </TouchableOpacity>
           ))}

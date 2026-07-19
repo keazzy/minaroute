@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manasik — MVP Wireframe Prototype</title>
+<style>
+  :root{
+    --bg:#eceae6; --frame:#1c1c1c; --screen:#f6f5f2; --card:#ffffff;
+    --line:#d9d6d0; --line2:#c4c0b8; --ink:#2a2a28; --muted:#8a877f;
+    --fill:#e7e4de; --dark:#33332f; --accent:#5f5f58; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);
+       display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 12px 60px;}
+  .lead{max-width:380px;text-align:center;color:#4a4a45;font-size:14px;line-height:1.5;margin:0 0 18px}
+  .lead b{color:#2a2a28}
+  .phone{width:360px;height:760px;background:var(--frame);border-radius:44px;padding:12px;box-shadow:0 18px 50px rgba(0,0,0,.22);position:relative}
+  .notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:26px;background:var(--frame);border-radius:0 0 16px 16px;z-index:20}
+  .viewport{position:relative;width:100%;height:100%;background:var(--screen);border-radius:34px;overflow:hidden}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column}
+  .screen.active{display:flex}
+  .statusbar{height:40px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 4px;font-size:12px;color:var(--muted);flex:0 0 auto}
+  .body{flex:1 1 auto;overflow-y:auto;padding:8px 18px 16px}
+  .tabbar{flex:0 0 auto;height:60px;border-top:1px solid var(--line);display:flex;background:var(--card)}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;border:none;background:none}
+  .tab .dot{width:18px;height:18px;border-radius:6px;background:var(--fill);border:1px solid var(--line2)}
+  .tab.on{color:var(--ink)}
+  .tab.on .dot{background:var(--dark);border-color:var(--dark)}
+  h1{font-size:22px;margin:6px 0 2px;font-weight:600}
+  h2{font-size:16px;margin:18px 0 8px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:0 0 12px}
+  .card.flat{border-radius:6px}
+  .ph{background:var(--fill);border-radius:6px;height:12px;margin:6px 0}
+  .ph.w40{width:40%}.ph.w60{width:60%}.ph.w80{width:80%}.ph.title{height:16px;width:55%;background:#dedbd4}
+  .img{background:repeating-linear-gradient(45deg,#e3e0d9,#e3e0d9 8px,#dcd9d1 8px,#dcd9d1 16px);border-radius:10px;height:120px;display:flex;align-items:center;justify-content:center;color:#a7a49b;font-size:12px}
+  .btn{display:block;width:100%;text-align:center;background:var(--dark);color:#fff;border:none;border-radius:999px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin:10px 0 0}
+  .btn.sec{background:var(--card);color:var(--ink);border:1px solid var(--line2)}
+  .btn.ghost{background:none;color:var(--accent);font-weight:500}
+  .row{display:flex;align-items:center;gap:10px}
+  .between{display:flex;align-items:center;justify-content:space-between}
+  .check{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--line2);background:var(--card);flex:0 0 auto;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+  .check.done{background:var(--dark);border-color:var(--dark)}
+  .chip{display:inline-block;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--accent);background:var(--card)}
+  .pill{border-radius:999px}
+  .list .item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .badge{font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:2px 9px}
+  .badge.done{background:var(--dark);color:#fff;border-color:var(--dark)}
+  .badge.now{background:var(--fill);color:var(--ink)}
+  .count{width:120px;height:120px;border-radius:24px;background:var(--fill);border:1px solid var(--line2);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:8px auto;cursor:pointer;user-select:none}
+  .count .n{font-size:40px;font-weight:700;line-height:1}
+  .count .of{font-size:12px;color:var(--muted)}
+  .arabic{font-family:"Amiri","Times New Roman",serif;font-size:26px;text-align:right;direction:rtl;line-height:1.8;color:#2a2a28}
+  .translit{color:var(--accent);font-size:14px;margin-top:6px}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);padding:20px 18px 22px;transform:translateY(110%);transition:transform .28s ease;z-index:30}
+  .sheet.up{transform:translateY(0)}
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .28s;z-index:25}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .back{background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;padding:6px 0;margin-top:4px}
+  .map{position:absolute;inset:0;background:
+      linear-gradient(0deg,transparent 49.6%,#dcd9d1 49.6%,#dcd9d1 50.4%,transparent 50.4%),
+      linear-gradient(90deg,transparent 49.6%,#dcd9d1 49.6%,#dcd9d1 50.4%,transparent 50.4%),
+      radial-gradient(circle at 50% 42%, #e9e6df 0 60px, transparent 61px),
+      #efece6;background-size:52px 52px,52px 52px,100% 100%,100% 100%}
+  .pin{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);background:var(--dark);color:#fff;border-radius:999px;padding:6px 12px;font-size:12px}
+  .me{position:absolute;top:66%;left:44%;width:16px;height:16px;border-radius:50%;background:#4a4a45;border:3px solid #fff}
+  .foothint{font-size:11px;color:var(--muted);text-align:center;margin:12px auto 0;max-width:380px}
+  .seg{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .seg .chip{cursor:pointer}
+  .seg .chip.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+</style>
+</head>
+<body>
+  <p class="lead"><b>Manasik — MVP wireframe.</b> Grayscale &amp; structural on purpose: we lock flow and hierarchy first, then apply the emerald/sand system. Tap through the four flows. Start at <b>Welcome</b>, or jump via the bottom tabs.</p>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="viewport" id="vp">
+
+      <!-- 1. WELCOME -->
+      <section class="screen active" id="welcome">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body" style="justify-content:center;display:flex;flex-direction:column">
+          <div class="img" style="height:150px;margin-bottom:20px">app mark</div>
+          <h1>As-salamu alaykum</h1>
+          <p class="sub">Your companion for Umrah — ready from home, guided every step.</p>
+          <button class="btn" onclick="go('language')">Get started</button>
+          <button class="btn ghost" onclick="go('home')">I'll sign in later</button>
+        </div>
+      </section>
+
+      <!-- 2. LANGUAGE -->
+      <section class="screen" id="language">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <button class="back" onclick="go('welcome')">← Back</button>
+          <h1>Choose your language</h1>
+          <p class="sub">You can change this anytime.</p>
+          <div class="seg" id="langSeg">
+            <span class="chip on" onclick="pick(this)">English</span>
+            <span class="chip" onclick="pick(this)">العربية</span>
+            <span class="chip" onclick="pick(this)">اردو</span>
+            <span class="chip" onclick="pick(this)">Bahasa</span>
+            <span class="chip" onclick="pick(this)">Hausa</span>
+            <span class="chip" onclick="pick(this)">Français</span>
+          </div>
+          <button class="btn" onclick="go('dates')">Continue</button>
+        </div>
+      </section>
+
+      <!-- 3. DATES -->
+      <section class="screen" id="dates">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <button class="back" onclick="go('language')">← Back</button>
+          <h1>When do you travel?</h1>
+          <p class="sub">This sets your countdown and prep plan. Skip if you're not sure yet.</p>
+          <div class="card">
+            <div class="between"><span>Departure</span><span class="chip">Select date</span></div>
+          </div>
+          <div class="card">
+            <div class="between"><span>Planned Umrah day</span><span class="chip">Select date</span></div>
+          </div>
+          <button class="btn" onclick="go('home')">Continue</button>
+          <button class="btn ghost" onclick="go('home')">Skip for now</button>
+        </div>
+      </section>
+
+      <!-- 4. HOME -->
+      <section class="screen" id="home">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <h1>As-salamu alaykum</h1>
+          <p class="sub">Ibrahim · Umrah</p>
+          <div class="card" style="text-align:center">
+            <div class="sub" style="margin:0">Your Umrah in</div>
+            <div style="font-size:34px;font-weight:700;margin:2px 0">32 days</div>
+            <div class="sub" style="margin:0">Let's get you ready, in shaa Allah</div>
+          </div>
+          <h2>Next step</h2>
+          <div class="card" onclick="go('prepare')" style="cursor:pointer">
+            <div class="between"><b>Finish your packing list</b><span>›</span></div>
+            <div class="ph w60"></div>
+          </div>
+          <h2>On the ground</h2>
+          <div class="card" onclick="go('guide')" style="cursor:pointer">
+            <div class="between"><b>Begin guided Umrah</b><span>›</span></div>
+            <p class="sub" style="margin:6px 0 0">We'll guide you rite by rite when you arrive.</p>
+          </div>
+        </div>
+        <nav class="tabbar" data-tabs></nav>
+      </section>
+
+      <!-- 5. PREPARE -->
+      <section class="screen" id="prepare">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <h1>Prepare</h1>
+          <p class="sub">Everything to feel ready before you fly.</p>
+          <div class="between"><h2 style="margin:8px 0">Packing</h2><span class="badge">2 / 4</span></div>
+          <div class="card">
+            <div class="row" style="padding:6px 0"><span class="check done" onclick="tog(this)">✓</span><span>Ihram garments</span></div>
+            <div class="row" style="padding:6px 0"><span class="check done" onclick="tog(this)">✓</span><span>Passport &amp; visa</span></div>
+            <div class="row" style="padding:6px 0"><span class="check" onclick="tog(this)"></span><span>Unscented toiletries</span></div>
+            <div class="row" style="padding:6px 0"><span class="check" onclick="tog(this)"></span><span>Comfortable sandals</span></div>
+          </div>
+          <h2>Learn</h2>
+          <div class="card" onclick="go('module')" style="cursor:pointer">
+            <div class="between"><b>What is Umrah?</b><span>3 min ›</span></div>
+          </div>
+          <div class="card" onclick="go('module')" style="cursor:pointer">
+            <div class="between"><b>Ihram &amp; its rules</b><span>4 min ›</span></div>
+          </div>
+        </div>
+        <nav class="tabbar" data-tabs></nav>
+      </section>
+
+      <!-- 6. MODULE -->
+      <section class="screen" id="module">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <button class="back" onclick="go('prepare')">← Prepare</button>
+          <span class="chip">Learn · 3 min</span>
+          <h1 style="margin-top:8px">What is Umrah?</h1>
+          <div class="img" style="margin:6px 0 12px">illustration</div>
+          <div class="ph title"></div>
+          <div class="ph w80"></div><div class="ph w80"></div><div class="ph w60"></div>
+          <div class="ph w80" style="margin-top:14px"></div><div class="ph w80"></div><div class="ph w40"></div>
+          <button class="btn sec" onclick="go('prepare')">Done</button>
+        </div>
+      </section>
+
+      <!-- 7. GUIDE -->
+      <section class="screen" id="guide">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <h1>Your Umrah</h1>
+          <p class="sub">Follow the steps in order. We'll notify you as you arrive.</p>
+          <div class="list">
+            <div class="item"><span class="badge done">✓</span><span style="flex:1"><b>Ihram &amp; intention</b><br><small style="color:var(--muted)">Miqat</small></span></div>
+            <div class="item" onclick="go('rite')" style="cursor:pointer"><span class="badge now">now</span><span style="flex:1"><b>Tawaf</b><br><small style="color:var(--muted)">Masjid al-Haram · Mataf</small></span><span>›</span></div>
+            <div class="item"><span class="badge">·</span><span style="flex:1"><b>Prayer at Maqam Ibrahim</b></span></div>
+            <div class="item"><span class="badge">·</span><span style="flex:1"><b>Zamzam</b></span></div>
+            <div class="item"><span class="badge">·</span><span style="flex:1"><b>Sa'i</b><br><small style="color:var(--muted)">Safa → Marwah</small></span></div>
+            <div class="item"><span class="badge">·</span><span style="flex:1"><b>Hair-cutting</b></span></div>
+          </div>
+        </div>
+        <button class="btn" style="position:absolute;bottom:74px;left:18px;right:18px;width:auto" onclick="arrival(true)">📍 I'm here</button>
+        <nav class="tabbar" data-tabs></nav>
+        <!-- arrival sheet -->
+        <div class="scrim" id="scrim" onclick="arrival(false)"></div>
+        <div class="sheet" id="sheet">
+          <div style="width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 12px"></div>
+          <h2 style="margin:0 0 4px">You've reached the Mataf</h2>
+          <p class="sub">Begin Tawaf when you're ready — I'll count your circuits with you.</p>
+          <button class="btn" onclick="arrival(false);go('rite')">Begin Tawaf</button>
+          <button class="btn ghost" onclick="arrival(false)">Not yet</button>
+        </div>
+      </section>
+
+      <!-- 8. ACTIVE RITE -->
+      <section class="screen" id="rite">
+        <div class="statusbar"><span>9:41</span><span>✈︎ offline</span></div>
+        <div class="body">
+          <button class="back" onclick="go('guide')">← Umrah</button>
+          <span class="chip">Rite 2 of 6 · Mataf</span>
+          <h1 style="margin-top:8px">Tawaf</h1>
+          <p class="sub">Circle the Ka'bah seven times, starting at the Black Stone.</p>
+          <div class="count" id="counter" onclick="tick()">
+            <div class="n" id="cnum">0</div><div class="of">of 7 circuits</div>
+          </div>
+          <p class="sub" style="text-align:center;margin-top:0">Tap each time you pass the Black Stone · <span class="back" style="display:inline" onclick="undo(event)">undo</span></p>
+          <div class="card">
+            <div class="between"><b>Du'a</b><span class="chip pill">▶ Play</span></div>
+            <div class="arabic">رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً</div>
+            <div class="translit">Rabbanā ātinā fi'd-dunyā ḥasanah…</div>
+          </div>
+          <button class="btn" id="riteDone" onclick="go('ritedone')">Mark complete</button>
+        </div>
+      </section>
+
+      <!-- 9. RITE COMPLETE -->
+      <section class="screen" id="ritedone">
+        <div class="statusbar"><span>9:41</span><span>✈︎ offline</span></div>
+        <div class="body" style="justify-content:center;display:flex;flex-direction:column">
+          <div class="img" style="height:90px;margin-bottom:16px">✓</div>
+          <h1>Tawaf complete</h1>
+          <p class="sub">Beautifully done. May Allah accept it.</p>
+          <div class="card">
+            <div class="sub" style="margin:0">Next</div>
+            <div class="between"><b>Prayer at Maqam Ibrahim</b><span>›</span></div>
+          </div>
+          <button class="btn" onclick="go('map')">Guide me there</button>
+          <button class="btn ghost" onclick="go('guide')">Back to steps</button>
+        </div>
+      </section>
+
+      <!-- 10. MAP -->
+      <section class="screen" id="map">
+        <div class="map"></div>
+        <div class="pin">Maqam Ibrahim</div>
+        <div class="me"></div>
+        <div class="statusbar" style="position:relative;z-index:2"><span>9:41</span><span>✈︎ offline</span></div>
+        <button class="back" style="position:absolute;top:44px;left:14px;z-index:2;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px" onclick="go('ritedone')">← Back</button>
+        <div class="sheet up" style="transition:none">
+          <div style="width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 12px"></div>
+          <div class="between"><b>Head to Maqam Ibrahim</b><span class="chip">Gate 79</span></div>
+          <p class="sub" style="margin:6px 0 0">~2 min · behind the Mataf, north side</p>
+          <button class="btn" onclick="go('rite')">I've arrived</button>
+        </div>
+      </section>
+
+      <!-- 11. MORE -->
+      <section class="screen" id="more">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <h1>More</h1>
+          <div class="card"><div class="between"><span>Sign in to sync</span><span class="chip">Optional</span></div><p class="sub" style="margin:6px 0 0">Keep your progress across devices.</p></div>
+          <div class="card" onclick="go('sources')" style="cursor:pointer"><div class="between"><b>Sources &amp; scholars</b><span>›</span></div></div>
+          <div class="card"><div class="between"><span>Language</span><span class="chip">English</span></div></div>
+          <div class="card"><div class="between"><span>Download offline maps</span><span>›</span></div></div>
+          <div class="card"><div class="between"><span>About Manasik</span><span>›</span></div></div>
+        </div>
+        <nav class="tabbar" data-tabs></nav>
+      </section>
+
+      <!-- 12. SOURCES -->
+      <section class="screen" id="sources">
+        <div class="statusbar"><span>9:41</span><span>▂▄▆ ⌁ 100%</span></div>
+        <div class="body">
+          <button class="back" onclick="go('more')">← More</button>
+          <h1>Sources &amp; scholars</h1>
+          <p class="sub">Every rite is reviewed against recognized scholarship.</p>
+          <div class="card"><b>Tawaf</b><div class="ph w80"></div><div class="ph w60"></div><span class="chip">Reviewed</span></div>
+          <div class="card"><b>Sa'i</b><div class="ph w80"></div><div class="ph w40"></div><span class="chip">Reviewed</span></div>
+        </div>
+        <nav class="tabbar" data-tabs></nav>
+      </section>
+
+    </div>
+  </div>
+  <p class="foothint">Wireframe prototype · onboarding → prepare → rite guidance → wayfinding. Counter and checklists are interactive.</p>
+
+<script>
+  var TABS=[["home","Home"],["prepare","Prepare"],["guide","Guide"],["more","More"]];
+  function renderTabs(active){
+    document.querySelectorAll('[data-tabs]').forEach(function(nav){
+      nav.innerHTML=TABS.map(function(t){
+        return '<button class="tab'+(t[0]===active?' on':'')+'" onclick="go(\''+t[0]+'\')"><span class="dot"></span>'+t[1]+'</button>';
+      }).join('');
+    });
+  }
+  function go(id){
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+    var el=document.getElementById(id); el.classList.add('active');
+    el.querySelector('.body') && (el.querySelector('.body').scrollTop=0);
+    renderTabs(id);
+    if(id==='rite'){resetCounter();}
+    if(id!=='guide'){arrival(false);}
+  }
+  function pick(el){el.parentNode.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')});el.classList.add('on');}
+  function tog(el){el.classList.toggle('done');el.textContent=el.classList.contains('done')?'✓':'';}
+  function arrival(open){
+    document.getElementById('sheet').classList.toggle('up',open);
+    document.getElementById('scrim').classList.toggle('on',open);
+  }
+  var c=0;
+  function resetCounter(){c=0;document.getElementById('cnum').textContent='0';document.getElementById('riteDone').style.opacity=.5;}
+  function tick(){ if(c<7){c++;document.getElementById('cnum').textContent=c;} if(c>=7){document.getElementById('riteDone').style.opacity=1;} }
+  function undo(e){e.stopPropagation(); if(c>0){c--;document.getElementById('cnum').textContent=c;} if(c<7){document.getElementById('riteDone').style.opacity=.5;}}
+  renderTabs('home');
+</script>
+</body>
+</html>

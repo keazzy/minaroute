@@ -1,0 +1,53 @@
+{
+  "common": {
+    "appName": "Minaroute",
+    "pilgrimageMode": "Manasik",
+    "continue": "Continue",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "cancel": "Cancel",
+    "offlineReassurance": "Everything you need is already here with you."
+  },
+  "tabs": {
+    "home": "Home",
+    "explore": "Explore",
+    "trips": "Trips",
+    "review": "Review"
+  },
+  "onboarding": {
+    "welcomeTitle": "As-salamu alaykum",
+    "welcomeSubtitle": "A calm companion for your journey — from home to the Haram.",
+    "chooseLanguage": "Choose your language",
+    "enterDatesTitle": "When is your Umrah?",
+    "enterDatesSubtitle": "We'll set up a gentle countdown. You can add this later.",
+    "getStarted": "Get started"
+  },
+  "home": {
+    "greeting": "As-salamu alaykum",
+    "countdownLabel": "until your Umrah",
+    "nextStep": "Your next step",
+    "addDatesPrompt": "Add your travel dates for a personalized countdown."
+  },
+  "prepare": {
+    "title": "Prepare",
+    "checklist": "Checklist",
+    "packing": "Packing list",
+    "learning": "Learning"
+  },
+  "guide": {
+    "title": "Guide",
+    "imHere": "I'm here",
+    "notStarted": "Not started",
+    "inProgress": "In progress",
+    "completed": "Completed"
+  },
+  "trips": {
+    "title": "Trips",
+    "startGuidedUmrah": "Start guided Umrah"
+  },
+  "review": {
+    "title": "Review"
+  }
+}
