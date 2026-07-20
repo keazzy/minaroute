@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "createdAt": "2026-07-05T16:40:35Z",
+    "updatedAt": "2026-07-14T00:00:00Z",
+    "version": "1.1",
+    "plaidVersion": "1.0"
+  },
+  "creator": {
+    "name": "Abdulazeez",
+    "expertise": "Muslim product designer focused on making ibaadah (worship) and Muslim daily life easier through technology",
+    "background": "I'm a Muslim product designer actively exploring ways to make ibaadah and Muslim life easier through tech. My guiding belief is to build apps that are truly useful, even if only to a single person. I already built Minaroute, an app for finding Muslim-friendly places (mosques, Islamic schools, halal food, events, stays). I haven't performed Umrah yet, but I hope one day to visit the House of Allah, and I want to help pilgrims from the moment they start planning — ensuring they are prepared from day one. I lived the discovery problem myself: my wife and I struggled to find Muslim schools that exist locally but aren't clearly listed on Google, and friends keep asking me the same question — which is exactly the gap Minaroute fills."
+  },
+  "purpose": {
+    "whoYouHelp": "Muslims in everyday life who want to easily find and support Muslim-friendly places (mosques, Islamic schools, halal food, events, stays) — and, as the high-intent segment within that same audience, pilgrims preparing for and performing Umrah or Hajj who want to feel ready and be guided through every rite.",
+    "problemYouSolve": "Two linked gaps. First, Muslim-friendly places are hard to discover: many mosques, Islamic schools, Muslim-owned businesses, and events either aren't on Google or aren't clearly labeled as Muslim-friendly, so people rely on word of mouth. Second, pilgrims lack live, personalized guidance: preparation for Umrah/Hajj is scattered across videos and booklets, and on the ground — without a mutawwif — there's no one to tell you what to do, when, how long, and where to go next at the moment you're there.",
+    "desiredTransformation": "In everyday life, a Muslim can confidently find, trust, and support Muslim-friendly places wherever they are, instead of guessing or relying on chance connections. For the pilgrimage, they go from unprepared to ready before they leave home, and then perform every rite correctly and in order with peace of mind — freed to focus on worship rather than logistics.",
+    "whyYou": "I'm a Muslim product designer building from genuine care — my north star is to make something truly useful even if it helps just one person. I've lived both problems: the frustration of not being able to find Muslim schools and places that exist but aren't discoverable, and the anxiety pilgrims describe about doing the rites correctly. I already built Minaroute and its community-driven directory, so I have a real, defensible data asset; and because I haven't performed the pilgrimage myself yet, I approach the rite guidance with humility — leaning on scholar-verified content and real pilgrim input rather than assuming I know the answers."
+  },
+  "product": {
+    "name": "Minaroute",
+    "oneLiner": "Minaroute helps Muslims find Muslim-friendly places every day — and guides them through every rite of Hajj and Umrah.",
+    "howItWorks": "Minaroute is an everyday app with a focused pilgrimage mode. The everyday shell has four tabs: Home (a curated launchpad — find places plus suggested pilgrimage), Explore (map search for Muslim-friendly places near you), Trips (the pilgrimage hub — set up your Umrah/Hajj, see your countdown, preparation, and next steps), and Review (community contributions that surface places Google doesn't clearly label). When a pilgrim taps 'Start guided Umrah' in the Trips hub, the app drops into a full-screen, focused pilgrimage mode (branded Manasik): the everyday tabs disappear, and it prepares the pilgrim at home and then uses location awareness (GPS/geofencing) to detect arrival at each site and surface the right rite — what to do, the du'a with audio and pronunciation, how long, count tracking, and where to go next, including which gate — all scholar-verified and working offline. One community-driven directory powers both everyday discovery and the 'halal places near the Haram' layer inside pilgrimage mode.",
+    "keyCapabilities": [
+      "Everyday discovery of Muslim-friendly places (mosques, Islamic schools, halal food, events, stays) via map search and a curated home",
+      "Community-driven directory and reviews that surface Muslim-friendly places Google doesn't list or clearly label — the core data moat",
+      "Pilgrimage mode (Manasik): a full-screen focused takeover with prepare-at-home (countdown, checklist, learning) and location-triggered, offline rite guidance with du'a audio and count tracking",
+      "Trips hub: set up Umrah/Hajj, see countdown, preparation progress, and next steps, and launch the guided experience",
+      "Purpose-built wayfinding and a 'halal places near the Haram' marketplace layer powered by the same directory"
+    ],
+    "platform": "cross-platform",
+    "marketDifferentiation": "Two reinforcing advantages. The everyday layer's moat is proprietary, community-driven data on Muslim-friendly places — coverage Google Maps and general Muslim apps like Muslim Pro don't have and won't build, compounding through network effects. The pilgrimage layer's edge is a focused, offline, location-aware companion that spans the whole journey from planning at home to the final rite — far more guided than logistics-first apps. The everyday utility keeps people installed year-round and funnels the highest-intent moment (someone planning Umrah) straight into the deep, differentiated pilgrimage experience.",
+    "magicMoment": "The hero moment is pilgrimage readiness: weeks before departure, the pilgrim opens the Trips hub and feels, for the first time, 'I've got this' before they ever leave home — then the location-aware guidance delivers on that promise once they arrive. The everyday discovery layer earns its keep by keeping the app useful and installed the rest of the year."
+  },
+  "audience": {
+    "primaryUser": "Two connected profiles served by one app. Everyday: Aisha, 31, a Muslim mother in Lagos looking for a nearby Islamic school for her child, a halal restaurant she can trust, or a local Islamic event — things that exist but she can't reliably find on Google, so today she asks around. Pilgrimage (the high-intent segment): Ibrahim, 34, a first-time Umrah pilgrim without a dedicated mutawwif, comfortable with a smartphone but not a heavy app user, non-Arabic-speaking, anxious about performing the rites correctly and in order. Both want a trustworthy, warm companion for Muslim life; Ibrahim is the everyday user at the moment his intent spikes.",
+    "secondaryUsers": [
+      "Muslim business and place owners (restaurants, schools, stays) who want to be listed and discovered by the community",
+      "Group leaders / mutawwifs and Hajj/Umrah travel agencies who could use the pilgrimage mode with their groups or distribute it to booked pilgrims",
+      "Family members back home who want reassurance and connection while a loved one is on pilgrimage (a longer-term consideration)"
+    ],
+    "currentAlternatives": "For everyday discovery: Google Maps (poor at labeling Muslim-friendly places, misses local mosques/schools/events), word of mouth and WhatsApp groups, Zabihah and general Muslim apps like Muslim Pro (mostly halal food / prayer times). For pilgrimage: a human mutawwif or guided group, YouTube guide videos, printed/PDF rite booklets, Google Maps for navigation, and Saudi's official Nusuk app (logistics-first, not a calm rite-guide).",
+    "frustrations": "Everyday: Muslim-friendly places exist but aren't discoverable or clearly labeled, so people rely on chance connections and miss businesses they'd happily support. Pilgrimage: no tool prepares a pilgrim from home and then follows them through the rites on the ground; guidance is generic, can't help at the exact moment and place of need, and a human guide isn't always available — leaving anxiety and fragmented preparation on a once-in-a-lifetime, spiritually critical journey."
+  },
+  "business": {
+    "revenueModel": "freemium",
+    "initialGoal": "Within 90 days, ship the pilgrimage mode (Manasik) into the existing Minaroute shell as a usable Umrah prototype that friends heading for Umrah soon can take with them and report back on — while keeping everyday discovery live and well-covered in one beachhead city (Lagos).",
+    "sixMonthVision": "A polished Umrah pilgrimage mode live on iOS and Android (rite guidance, prep, itinerary, offline, initial multi-language), a dense, trusted community directory in the beachhead city, early groundwork for Hajj, and first conversations with a travel agency and with Muslim businesses about listings and the near-Haram marketplace.",
+    "constraints": "Solo founder who is a designer, not an engineer — built with AI coding agents (Claude Code). Limited budget (favor free tiers) and limited time (part-time). Minaroute's everyday discovery and community directory already exist, so the new build focuses on the pilgrimage mode dropped into the shell, reusing the directory rather than rebuilding discovery. Scope must stay lean and Umrah-first.",
+    "goToMarket": "Reach users through Islamic content creators who make Hajj/Umrah and Muslim-life content, short-form social da'wah (prep and rite tips, plus 'find Muslim-friendly places' content), Hajj/Umrah travel agencies, and local mosques and Muslim communities. The community directory doubles as an acquisition engine (people actively search for Muslim schools, halal food, and events) and a retention engine (everyday utility keeps the app installed between pilgrimages). Monetization stays light and mission-first: core guidance and discovery are free, with premium features and — the sharper opportunity — a location-based local-business marketplace (listings for hotels, stays, restaurants, and services), plus agency partnerships as a secondary channel."
+  },
+  "feeling": {
+    "brandPersonality": "Warm, companionable, and trustworthy — a knowledgeable friend for Muslim life. The brand carries a dual register across two modes: lively, helpful, and confident in the everyday discovery shell, and calm, reverent, and unhurried in the pilgrimage mode. It always feels human and caring, never clinical or salesy.",
+    "toneOfVoice": "Gentle and encouraging, plain and accessible for non-native speakers and all literacy levels, and naturally warm with light spiritual touches (in shaa Allah, may Allah accept) without being preachy. Tone shifts by context: practical and friendly when helping someone find a place, and quiet and reassuring when guiding worship."
+  },
+  "techStack": {
+    "appType": "cross-platform",
+    "frontend": {
+      "choice": "React Native (Expo)",
+      "rationale": "One codebase for iOS, Android, and web — already the basis of Minaroute. Largest ecosystem and excellent AI-coding-agent support; the fastest path for a solo designer-founder building with Claude Code. Maps use expo-maps for everyday discovery, with a bundled static Haram map for offline pilgrimage wayfinding. The UI font is Quicksand by default, wired through a single token so it can swap to Satoshi (with a planned Settings toggle); Amiri renders Arabic."
+    },
+    "backend": {
+      "choice": "Supabase",
+      "rationale": "Already built and running in Minaroute. Postgres with PostGIS is ideal for the geospatial places directory (near-me / radius search), plus storage, realtime, and edge functions. Keeping it avoids rewriting a working backend; the pilgrimage tables (itineraries, rite progress) are simple additions."
+    },
+    "database": {
+      "choice": "Supabase Postgres (PostGIS)",
+      "rationale": "Relational and geospatial, with Row-Level Security. Powers the places directory, reviews, itineraries, and progress; core pilgrimage rite content is bundled on-device so it works offline in crowds."
+    },
+    "auth": {
+      "choice": "Supabase Auth",
+      "rationale": "Same system as Minaroute's existing admin auth, integrates natively with Postgres Row-Level Security, and supports anonymous sign-ins that later convert to a permanent account — matching the optional, no-forced-account requirement. Social login (Apple/Google) without a second vendor; an account is needed to contribute reviews/listings and to sync across devices."
+    },
+    "payments": {
+      "choice": "RevenueCat",
+      "rationale": "Reserved for the future freemium premium tier — the standard for cross-platform mobile subscriptions, handling App Store and Play Store billing. Not required for the Umrah-first MVP, since core guidance and discovery are free and the marketplace/listings layer comes later."
+    }
+  },
+  "tooling": {
+    "codingAgent": "claude-code"
+  }
+}

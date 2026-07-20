@@ -7,13 +7,14 @@ import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
 import { Location } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
 import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useFocusEffect } from '@react-navigation/native';
-import { Image } from 'expo-image';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import LottieView from 'lottie-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionSheetIOS, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActionSheetIOS, Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapViewHandle } from '../components/map';
@@ -143,6 +144,7 @@ export default function HomeScreen() {
   const searchInputRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
+  const { colors, isDark } = useTheme();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [events, setEvents] = useState<HomeListItem[]>([]);
@@ -165,7 +167,6 @@ export default function HomeScreen() {
   const submitPlaceSnapPoints = useMemo(() => ['90%'], []);
 
   const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
     if (index >= 0) {
       homeSheetIndexRef.current = index;
     }
@@ -290,7 +291,7 @@ export default function HomeScreen() {
     const label = encodeURIComponent(selectedPlace.name);
     const appleUrl = `http://maps.apple.com/?ll=${lat},${lng}&q=${label}`;
     const googleWebUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    const googleAppUrl = `comgooglemaps://?q=${label}&center=${lat},${lng}`;
+    const googleAppUrl = `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`;
 
     const openApple = async () => {
       try {
@@ -574,33 +575,45 @@ export default function HomeScreen() {
       {/* Floating Header */}
       <View style={[styles.headerContainer, { top: insets.top + 10 }]}>
         <View style={styles.headerContent}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarWrapper}>
-              <Image source={ASSETS.avatar} style={styles.avatarCollar} />
-              <Image source={ASSETS.avatarHead} style={styles.avatarHead} />
-            </View>
-          </View>
+          <TouchableOpacity 
+            style={styles.aiButtonContainer}
+            onPress={() => Alert.alert('Coming Soon', 'AI features are coming soon!')}
+            activeOpacity={0.8}
+          >
+            <Glass style={styles.aiButtonGlass} glassStyle="regular">
+              <LottieView
+                source={{ uri: 'https://lottie.host/f70b4dce-b6a5-4e8a-afdc-47acf9c48440/SvXJ2qvt0V.lottie' }}
+                autoPlay
+                loop
+                style={{ width: 56, height: 56 }}
+              />
+            </Glass>
+          </TouchableOpacity>
           <TouchableOpacity
-            style={styles.searchContainer}
+            style={styles.searchContainerOuter}
             activeOpacity={0.85}
             onPress={() => {
               router.push({ pathname: '/search-results', params: { focus: '1' } });
             }}
           >
-            <MingcuteIcon name="search_line" size={24} color="#000" />
-            <TextInput
-              ref={searchInputRef}
-              value=""
-              editable={false}
-              selectTextOnFocus={false}
-              placeholder="Search mosques, halal food, schools…"
-              placeholderTextColor="#6a6c6a"
-              style={styles.searchInput}
-              pointerEvents="none"
-            />
+            <Glass style={styles.searchContainerGlass} glassStyle="regular">
+              <MingcuteIcon name="search_line" size={24} color={isDark ? '#fff' : '#000'} />
+              <TextInput
+                ref={searchInputRef}
+                value=""
+                editable={false}
+                selectTextOnFocus={false}
+                placeholder="Search mosques, halal food, schools…"
+                placeholderTextColor={colors.placeholder}
+                style={[styles.searchInput, { color: colors.text }]}
+                pointerEvents="none"
+              />
+            </Glass>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsButton} onPress={openSubmitPlaceExplainer} activeOpacity={0.85}>
-            <MingcuteIcon name="question_line" size={24} color="#000" />
+          <TouchableOpacity style={styles.settingsButtonOuter} onPress={openSubmitPlaceExplainer} activeOpacity={0.85}>
+            <Glass style={styles.settingsButtonGlass} glassStyle="regular">
+              <MingcuteIcon name="question_line" size={24} color={isDark ? '#fff' : '#000'} />
+            </Glass>
           </TouchableOpacity>
         </View>
 
@@ -671,11 +684,10 @@ export default function HomeScreen() {
         index={0}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
         enablePanDownToClose={false}
         enableOverDrag={false}
         topInset={insets.top}
-        allowFullExpansion={false}
       >
         <HomeSheetContent
           places={nearbyPlaces.map(p => ({
@@ -697,7 +709,7 @@ export default function HomeScreen() {
         ref={eventDetailsSheetRef}
         index={0}
         snapPoints={eventDetailsSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
         onDismiss={handleEventDetailsDismiss}
         enableBackdropDismiss
       >
@@ -709,6 +721,7 @@ export default function HomeScreen() {
               city={selectedEvent.city}
               photos={selectedEvent.photos}
               description={selectedEvent.description}
+              isDark={isDark}
             />
           )}
         </BottomSheetScrollView>
@@ -718,7 +731,7 @@ export default function HomeScreen() {
         ref={submitPlaceSheetRef}
         index={0}
         snapPoints={submitPlaceSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
         onDismiss={handleSubmitPlaceExplainerDismiss}
         enableOverDrag={false}
         enablePanDownToClose
@@ -732,7 +745,7 @@ export default function HomeScreen() {
         ref={placeDetailsSheetRef}
         index={0}
         snapPoints={detailsSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
         onDismiss={handlePlaceDetailsDismiss}
         enableBackdropDismiss
       >
@@ -749,7 +762,7 @@ export default function HomeScreen() {
         >
           <SymbolView
             name="xmark.circle.fill"
-            tintColor="#c7c7cc"
+            tintColor={isDark ? '#6e6e73' : '#c7c7cc'}
             style={{ width: 40, height: 40 }}
           />
         </TouchableOpacity>
@@ -758,21 +771,21 @@ export default function HomeScreen() {
             <Text style={styles.openInMapsButtonText}>Open in Maps</Text>
           </TouchableOpacity>
 
-          <Text style={styles.placeDetailsName}>{selectedPlace?.name ?? ''}</Text>
-          <Text style={styles.placeDetailsAddress}>{selectedPlace?.address ?? ''}</Text>
+          <Text style={[styles.placeDetailsName, { color: colors.text }]}>{selectedPlace?.name ?? ''}</Text>
+          <Text style={[styles.placeDetailsAddress, { color: colors.textSecondary }]}>{selectedPlace?.address ?? ''}</Text>
 
           {!!selectedPlace?.tags?.length && (
             <View style={styles.placeDetailsTagsRow}>
               {selectedPlace.tags.map((tag, index) => (
-                <View key={`${tag}-${index}`} style={styles.placeDetailsTag}>
-                  <Text style={styles.placeDetailsTagText}>{tag}</Text>
+                <View key={`${tag}-${index}`} style={[styles.placeDetailsTag, { backgroundColor: colors.badgeBg }]}>
+                  <Text style={[styles.placeDetailsTagText, { color: colors.text }]}>{tag}</Text>
                 </View>
               ))}
             </View>
           )}
 
           {!!selectedPlace?.description && (
-            <Text style={styles.placeDetailsDescription}>{selectedPlace.description}</Text>
+            <Text style={[styles.placeDetailsDescription, { color: colors.textSecondary }]}>{selectedPlace.description}</Text>
           )}
         </BottomSheetScrollView>
       </NativeSheet>
@@ -828,6 +841,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
+  aiButtonContainer: {
+    width: 48,
+    height: 48,
+  },
+  aiButtonGlass: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   avatarContainer: {
     width: 48,
     height: 48,
@@ -858,30 +882,37 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
   },
-  searchContainer: {
+  searchContainerOuter: {
     flex: 1,
     height: 48,
-    backgroundColor: '#fff',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  searchContainerGlass: {
+    flex: 1,
+    height: 48,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: '#000',
     paddingVertical: 0,
     fontFamily: 'Quicksand_500Medium',
   },
-  settingsButton: {
+  settingsButtonOuter: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  settingsButtonGlass: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },

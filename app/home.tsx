@@ -7,11 +7,11 @@ import { CATEGORIES, Category, Location } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
 import { Colors } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
-import { Image } from 'expo-image';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import LottieView from 'lottie-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionSheetIOS, Animated, Easing, FlatList, Linking, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ActionSheetIOS, Alert, Animated, Easing, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapViewHandle } from '../components/map';
@@ -139,8 +139,8 @@ function ShimmerBlock({ style }: { style?: any }) {
     const anim = Animated.loop(
       Animated.timing(shimmer, {
         toValue: 1,
-        duration: 1100,
-        easing: Easing.inOut(Easing.ease),
+        duration: 900,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
         useNativeDriver: true,
       })
     );
@@ -201,6 +201,21 @@ export default function HomeScreen() {
   const searchInputRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Dynamic colors for dark mode
+  const dynamicColors = useMemo(() => ({
+    background: isDark ? '#151718' : '#fff',
+    text: isDark ? '#fff' : '#0c0c0f',
+    textSecondary: isDark ? '#9BA1A6' : '#454745',
+    sheetBg: isDark ? '#1c1c1e' : '#fff',
+    searchBg: isDark ? '#2a2a2a' : '#fff',
+    searchBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    buttonBg: isDark ? '#2a2a2a' : '#fff',
+    iconColor: isDark ? '#fff' : '#000',
+    placeholderColor: isDark ? '#9BA1A6' : '#6a6c6a',
+  }), [isDark]);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [events, setEvents] = useState<HomeListItem[]>([]);
@@ -224,7 +239,6 @@ export default function HomeScreen() {
 
 
   const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
     if (index >= 0) {
       homeSheetIndexRef.current = index;
     }
@@ -300,8 +314,12 @@ export default function HomeScreen() {
   }, [restoreHomeSheet]);
 
   const openSubmitPlaceExplainer = useCallback(() => {
+    console.log('[Home] openSubmitPlaceExplainer called');
     homeSheetRef.current?.dismiss();
-    submitPlaceSheetRef.current?.present();
+    setTimeout(() => {
+      console.log('[Home] Presenting submitPlaceSheet');
+      submitPlaceSheetRef.current?.present();
+    }, 150);
   }, []);
 
   const handleSubmitPlacePress = useCallback(() => {
@@ -348,7 +366,7 @@ export default function HomeScreen() {
     const appleUrl = `http://maps.apple.com/?ll=${lat},${lng}&q=${label}`;
     const googleWebUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     const androidGeoUrl = `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
-    const googleAppUrl = `comgooglemaps://?q=${label}&center=${lat},${lng}`;
+    const googleAppUrl = `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`;
 
     if (Platform.OS === 'web') {
       try {
@@ -610,27 +628,34 @@ export default function HomeScreen() {
     return (
       <View>
         <View style={styles.greetingContainer}>
-           <Text style={styles.greetingText}>As salam alykum</Text>
-           <Text style={styles.subGreetingText}>What would you like you find today?</Text>
+           <Text style={[styles.greetingText, { color: dynamicColors.text }]}>As salam alykum</Text>
+           <Text style={[styles.subGreetingText, { color: dynamicColors.textSecondary }]}>What would you like you find today?</Text>
         </View>
 
         <View style={styles.categoriesContainer}>
-          <FlatList
-            data={CATEGORIES}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.id}
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesList}
-          />
+            nestedScrollEnabled
+            scrollEventThrottle={16}
+            directionalLockEnabled
+            disableIntervalMomentum
+          >
+            {CATEGORIES.map((item) => (
+              <View key={item.id}>
+                {renderCategoryItem({ item })}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.locationsHeaderContainer}>
-          <Text style={styles.locationsHeader}>Based on your location</Text>
+          <Text style={[styles.locationsHeader, { color: dynamicColors.text }]}>Based on your location</Text>
         </View>
       </View>
     );
-  }, [renderCategoryItem]);
+  }, [renderCategoryItem, dynamicColors]);
 
   const nearbyPlaces = useMemo(() => {
     if (locationPermissionStatus !== ExpoLocation.PermissionStatus.GRANTED) return places;
@@ -719,33 +744,39 @@ export default function HomeScreen() {
       {/* Floating Header */}
       <View style={[styles.headerContainer, { top: insets.top + 10 }]}>
         <View style={styles.headerContent}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarWrapper}>
-              <Image source={ASSETS.avatar} style={styles.avatarCollar} />
-              <Image source={ASSETS.avatarHead} style={styles.avatarHead} />
-            </View>
-          </View>
+          <TouchableOpacity 
+            style={[styles.aiButtonContainer, { backgroundColor: dynamicColors.buttonBg, borderColor: dynamicColors.searchBorder }]}
+            onPress={() => Alert.alert('Coming Soon', 'AI features are coming soon!')}
+            activeOpacity={0.8}
+          >
+            <LottieView
+              source={{ uri: 'https://lottie.host/f70b4dce-b6a5-4e8a-afdc-47acf9c48440/SvXJ2qvt0V.lottie' }}
+              autoPlay
+              loop
+              style={{ width: 56, height: 56 }}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
-            style={styles.searchContainer}
+            style={[styles.searchContainer, { backgroundColor: dynamicColors.searchBg, borderColor: dynamicColors.searchBorder }]}
             activeOpacity={0.85}
             onPress={() => {
               router.push({ pathname: '/search-results', params: { focus: '1' } });
             }}
           >
-            <MingcuteIcon name="search_line" size={24} color="#000" />
+            <MingcuteIcon name="search_line" size={24} color={dynamicColors.iconColor} />
             <TextInput
               ref={searchInputRef}
               value=""
               editable={false}
               selectTextOnFocus={false}
               placeholder="Search mosques, halal food, schools…"
-              placeholderTextColor="#6a6c6a"
-              style={styles.searchInput}
+              placeholderTextColor={dynamicColors.placeholderColor}
+              style={[styles.searchInput, { color: dynamicColors.text }]}
               pointerEvents="none"
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsButton} onPress={openSubmitPlaceExplainer} activeOpacity={0.85}>
-            <MingcuteIcon name="question_line" size={24} color="#000" />
+          <TouchableOpacity style={[styles.settingsButton, { backgroundColor: dynamicColors.buttonBg }]} onPress={openSubmitPlaceExplainer} activeOpacity={0.85}>
+            <MingcuteIcon name="question_line" size={24} color={dynamicColors.iconColor} />
           </TouchableOpacity>
         </View>
 
@@ -788,7 +819,7 @@ export default function HomeScreen() {
         index={0}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: dynamicColors.sheetBg }]}
         enablePanDownToClose={false}
         enableOverDrag={false}
         topInset={insets.top}
@@ -831,7 +862,7 @@ export default function HomeScreen() {
         ref={eventDetailsSheetRef}
         index={0}
         snapPoints={eventDetailsSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: dynamicColors.sheetBg }]}
         onDismiss={handleEventDetailsDismiss}
         enableBackdropDismiss
       >
@@ -843,6 +874,7 @@ export default function HomeScreen() {
               city={selectedEvent.city}
               photos={selectedEvent.photos}
               description={selectedEvent.description}
+              isDark={isDark}
             />
           )}
         </BottomSheetScrollView>
@@ -852,7 +884,7 @@ export default function HomeScreen() {
         ref={submitPlaceSheetRef}
         index={0}
         snapPoints={submitPlaceSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: dynamicColors.sheetBg }]}
         onDismiss={handleSubmitPlaceExplainerDismiss}
         enableOverDrag={false}
         enablePanDownToClose
@@ -867,7 +899,7 @@ export default function HomeScreen() {
         ref={placeDetailsSheetRef}
         index={0}
         snapPoints={detailsSnapPoints}
-        backgroundStyle={styles.bottomSheetBackground}
+        backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: dynamicColors.sheetBg }]}
         onDismiss={handlePlaceDetailsDismiss}
         enableBackdropDismiss
       >
@@ -876,8 +908,8 @@ export default function HomeScreen() {
             <Text style={styles.openInMapsButtonText}>Open in Maps</Text>
           </TouchableOpacity>
 
-          <Text style={styles.placeDetailsName}>{selectedPlace?.name ?? ''}</Text>
-          <Text style={styles.placeDetailsAddress}>{selectedPlace?.address ?? ''}</Text>
+          <Text style={[styles.placeDetailsName, { color: dynamicColors.text }]}>{selectedPlace?.name ?? ''}</Text>
+          <Text style={[styles.placeDetailsAddress, { color: dynamicColors.textSecondary }]}>{selectedPlace?.address ?? ''}</Text>
 
           {!!selectedPlace?.tags?.length && (
             <View style={styles.placeDetailsTagsRow}>
@@ -1028,6 +1060,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  aiButtonContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarContainer: {
     width: 48,

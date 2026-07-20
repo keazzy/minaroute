@@ -1,3 +1,4 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Image, ImageSource } from 'expo-image';
 import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -30,6 +31,8 @@ function estimatePillWidth(label: string) {
 }
 
 export default function PlaceCard({ title, subtitle, type, distanceLabel, tags = [], onPress, imageUri: preferredImageUri }: Props) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [badgesWidth, setBadgesWidth] = useState<number>(0);
 
   // Get the image source - prefer database photo URL, fall back to local asset by type
@@ -95,9 +98,18 @@ export default function PlaceCard({ title, subtitle, type, distanceLabel, tags =
 
   const Wrapper = onPress ? TouchableOpacity : View;
 
+  const dynamicStyles = useMemo(() => ({
+    card: { backgroundColor: isDark ? '#2a2a2a' : '#f9f6f4' },
+    imageContainer: { backgroundColor: isDark ? '#3a3a3a' : '#e8e8e8' },
+    title: { color: isDark ? '#fff' : '#0c0c0f' },
+    subtitle: { color: isDark ? '#9BA1A6' : '#454745' },
+    badge: { backgroundColor: isDark ? '#3a3a3a' : '#fff' },
+    badgeText: { color: isDark ? '#fff' : '#000' },
+  }), [isDark]);
+
   return (
-    <Wrapper style={styles.card} activeOpacity={0.85} onPress={onPress as any}>
-      <View style={styles.imageContainer}>
+    <Wrapper style={[styles.card, dynamicStyles.card]} activeOpacity={0.85} onPress={onPress as any}>
+      <View style={[styles.imageContainer, dynamicStyles.imageContainer]}>
         <Image
           source={imageSource}
           style={styles.image}
@@ -109,34 +121,34 @@ export default function PlaceCard({ title, subtitle, type, distanceLabel, tags =
 
       <View style={styles.body}>
         <View>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={[styles.title, dynamicStyles.title]} numberOfLines={1}>
             {title}
           </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={[styles.subtitle, dynamicStyles.subtitle]} numberOfLines={1}>
             {subtitle}
           </Text>
         </View>
 
         <View style={styles.badgesRow} onLayout={handleBadgesLayout}>
           {!!distancePill && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText} numberOfLines={1}>
+            <View style={[styles.badge, dynamicStyles.badge]}>
+              <Text style={[styles.badgeText, dynamicStyles.badgeText]} numberOfLines={1}>
                 {distancePill}
               </Text>
             </View>
           )}
 
           {visibleTags.map((t) => (
-            <View key={t} style={styles.badge}>
-              <Text style={styles.badgeText} numberOfLines={1}>
+            <View key={t} style={[styles.badge, dynamicStyles.badge]}>
+              <Text style={[styles.badgeText, dynamicStyles.badgeText]} numberOfLines={1}>
                 {t}
               </Text>
             </View>
           ))}
 
           {overflowCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{`+${overflowCount}`}</Text>
+            <View style={[styles.badge, dynamicStyles.badge]}>
+              <Text style={[styles.badgeText, dynamicStyles.badgeText]}>{`+${overflowCount}`}</Text>
             </View>
           )}
         </View>

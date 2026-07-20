@@ -1,4 +1,3 @@
-import { Quicksand_500Medium, Quicksand_700Bold, useFonts as useQuicksandFonts } from '@expo-google-fonts/quicksand';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts as useExpoFonts } from 'expo-font';
@@ -10,6 +9,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import '@/src/lib/i18n';
+import { AuthContext, useAuthState } from '@/src/lib/supabase/auth';
+import { ThemeProvider as AppThemeProvider, useAppFonts } from '@/src/theme/ThemeProvider';
 import { Platform } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
@@ -24,22 +26,22 @@ if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in
 }
 
 export const unstable_settings = {
-  initialRouteName: 'index',
+  initialRouteName: '(tabs)',
 };
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  // Anonymous-first auth: best-effort session, never blocks rendering.
+  const auth = useAuthState();
 
-  const [quicksandLoaded] = useQuicksandFonts({
-    Quicksand_500Medium,
-    Quicksand_700Bold,
-  });
+  // Quicksand (all weights) + Amiri (Arabic), centralized in the theme layer.
+  const appFontsLoaded = useAppFonts();
 
   const [mingcuteLoaded] = useExpoFonts({
     MingCute: require('mingcute_icon/font/MingCute.ttf'),
   });
 
-  const ready = quicksandLoaded && mingcuteLoaded;
+  const ready = appFontsLoaded && mingcuteLoaded;
 
   useEffect(() => {
     if (ready) {
@@ -53,10 +55,12 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <BottomSheetModalProvider>
+      <AuthContext.Provider value={auth}>
+        <AppThemeProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <BottomSheetModalProvider>
           <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding" options={{ headerShown: false }} />
             <Stack.Screen name="permission" options={{ headerShown: false }} />
             <Stack.Screen name="home" options={{ headerShown: false }} />
@@ -65,9 +69,11 @@ export default function RootLayout() {
             <Stack.Screen name="admin" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
-          <StatusBar style="auto" />
-        </BottomSheetModalProvider>
-      </ThemeProvider>
+            <StatusBar style="auto" />
+            </BottomSheetModalProvider>
+          </ThemeProvider>
+        </AppThemeProvider>
+      </AuthContext.Provider>
     </GestureHandlerRootView>
   );
 }

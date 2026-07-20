@@ -1,7 +1,8 @@
 // Android/Web - React Native content for the Submit Place sheet
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Image } from 'expo-image';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = {
   onSubmitPress: () => void;
@@ -21,6 +22,19 @@ const STEPS = [
 ];
 
 export function SubmitPlaceSheetContent({ onSubmitPress }: Props) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const dynamicStyles = useMemo(() => ({
+    title: { color: isDark ? '#fff' : '#000' },
+    subtitle: { color: isDark ? '#9BA1A6' : '#454745' },
+    sectionTitle: { color: isDark ? '#fff' : '#000' },
+    stepBadge: { backgroundColor: isDark ? '#fff' : '#000' },
+    stepBadgeText: { color: isDark ? '#000' : '#fff' },
+    stepTitle: { color: isDark ? '#fff' : '#000' },
+    stepSubtitle: { color: isDark ? '#9BA1A6' : '#454745' },
+  }), [isDark]);
+
   return (
     <ScrollView
       contentContainerStyle={styles.content}
@@ -28,8 +42,8 @@ export function SubmitPlaceSheetContent({ onSubmitPress }: Props) {
       bounces={false}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Submit a place</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, dynamicStyles.title]}>Submit a place</Text>
+        <Text style={[styles.subtitle, dynamicStyles.subtitle]}>
           We are building a directory for all muslims and your help would go a long way
         </Text>
       </View>
@@ -39,18 +53,18 @@ export function SubmitPlaceSheetContent({ onSubmitPress }: Props) {
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>How to submit a place</Text>
+        <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>How to submit a place</Text>
       </View>
 
       <View style={styles.steps}>
         {STEPS.map((step) => (
           <View key={step.num} style={styles.stepRow}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepBadgeText}>{step.num}</Text>
+            <View style={[styles.stepBadge, dynamicStyles.stepBadge]}>
+              <Text style={[styles.stepBadgeText, dynamicStyles.stepBadgeText]}>{step.num}</Text>
             </View>
             <View style={styles.stepTextWrap}>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepSubtitle}>{step.subtitle}</Text>
+              <Text style={[styles.stepTitle, dynamicStyles.stepTitle]}>{step.title}</Text>
+              <Text style={[styles.stepSubtitle, dynamicStyles.stepSubtitle]}>{step.subtitle}</Text>
             </View>
           </View>
         ))}

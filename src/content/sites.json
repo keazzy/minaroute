@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "sites": [
+    {
+      "siteId": "masjid-al-haram",
+      "name": "Masjid al-Haram (the Ka'bah)",
+      "lat": 21.4225,
+      "lng": 39.8262,
+      "geofenceRadiusM": 150,
+      "gates": [
+        {
+          "name": "King Abdulaziz Gate (Gate 1)",
+          "note": "Main southern entrance, near Safa.",
+          "lat": 21.4207,
+          "lng": 39.8265
+        },
+        {
+          "name": "King Fahd Gate (Gate 79)",
+          "note": "Western entrance.",
+          "lat": 21.423,
+          "lng": 39.8246
+        }
+      ]
+    },
+    {
+      "siteId": "safa-marwah",
+      "name": "Al-Safa and Al-Marwah",
+      "lat": 21.4231,
+      "lng": 39.8271,
+      "geofenceRadiusM": 120,
+      "gates": [
+        {
+          "name": "As-Safa",
+          "note": "Start of Sa'i.",
+          "lat": 21.4216,
+          "lng": 39.8267
+        },
+        {
+          "name": "Al-Marwah",
+          "note": "End of each lap.",
+          "lat": 21.4245,
+          "lng": 39.8275
+        }
+      ]
+    }
+  ]
+}

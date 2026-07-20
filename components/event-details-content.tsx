@@ -8,9 +8,16 @@ type Props = {
   city?: string;
   photos?: string[];
   description?: string;
+  isDark?: boolean;
 };
 
-export default function EventDetailsContent({ title, tags = [], city, photos = [], description = '' }: Props) {
+export default function EventDetailsContent({ title, tags = [], city, photos = [], description = '', isDark = false }: Props) {
+  const dynamicColors = useMemo(() => ({
+    text: isDark ? '#fff' : '#000',
+    textSecondary: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+    tagBg: isDark ? 'rgba(255,255,255,0.1)' : '#fff',
+    tagBorder: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+  }), [isDark]);
   const pills = useMemo(() => {
     const list: string[] = [];
     if (tags.length) list.push(...tags);
@@ -25,14 +32,14 @@ export default function EventDetailsContent({ title, tags = [], city, photos = [
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: dynamicColors.text }]}>{title}</Text>
       </View>
 
       {!!pills.length && (
         <View style={styles.tagsContainer}>
           {pills.map((t) => (
-            <View key={t} style={styles.tagPill}>
-              <Text style={styles.tagText} numberOfLines={1}>
+            <View key={t} style={[styles.tagPill, { backgroundColor: dynamicColors.tagBg, borderColor: dynamicColors.tagBorder }]}>
+              <Text style={[styles.tagText, { color: dynamicColors.text }]} numberOfLines={1}>
                 {t}
               </Text>
             </View>
@@ -57,7 +64,7 @@ export default function EventDetailsContent({ title, tags = [], city, photos = [
 
       {!!description && (
         <View style={styles.descriptionContainer}>
-          <Text style={styles.descriptionText}>{description}</Text>
+          <Text style={[styles.descriptionText, { color: dynamicColors.text }]}>{description}</Text>
         </View>
       )}
     </View>

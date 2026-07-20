@@ -26,7 +26,7 @@ export default function PermissionScreen() {
         const skipped = await Storage.getItemAsync(LOCATION_PERMISSION_SKIP_KEY);
         if (cancelled) return;
         if (skipped === '1') {
-          router.replace('/home');
+          router.replace('/(tabs)');
           return;
         }
 
@@ -35,7 +35,7 @@ export default function PermissionScreen() {
         setStatus(res.status);
         if (res.status === ExpoLocation.PermissionStatus.GRANTED) {
           await Storage.deleteItemAsync(LOCATION_PERMISSION_SKIP_KEY);
-          router.replace('/home');
+          router.replace('/(tabs)');
         }
       } catch {
         if (!cancelled) {
@@ -53,7 +53,7 @@ export default function PermissionScreen() {
 
   const handleSkip = useCallback(() => {
     void Storage.setItemAsync(LOCATION_PERMISSION_SKIP_KEY, '1');
-    router.replace('/home');
+    router.replace('/(tabs)');
   }, [router]);
 
   const handleGrant = useCallback(async () => {
@@ -64,7 +64,7 @@ export default function PermissionScreen() {
 
       if (res.status === ExpoLocation.PermissionStatus.GRANTED) {
         await Storage.deleteItemAsync(LOCATION_PERMISSION_SKIP_KEY);
-        router.replace('/home');
+        router.replace('/(tabs)');
         return;
       }
 

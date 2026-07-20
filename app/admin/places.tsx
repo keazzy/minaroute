@@ -127,6 +127,23 @@ export default function AdminPlaces() {
   const [selected, setSelected] = useState<PlaceRow | null>(null);
   const [draft, setDraft] = useState<PlaceDraft>(emptyDraft);
 
+  // Dropdown and Import state
+  const [showNewDropdown, setShowNewDropdown] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    message: string;
+    stats?: { found: number; inserted: number; skipped: number; errors: number };
+  } | null>(null);
+  const [importForm, setImportForm] = useState({
+    locationName: '',
+    latitude: '',
+    longitude: '',
+    radiusMeters: '15000',
+    category: 'Mosque',
+  });
+
   const modalTitle = useMemo(() => {
     return mode === 'create' ? 'Create Place' : 'Edit Place';
   }, [mode]);
@@ -222,6 +239,217 @@ export default function AdminPlaces() {
     setSelected(null);
     setDraft(emptyDraft);
     setError('');
+  }, []);
+
+  const runImport = useCallback(async () => {
+    const lat = parseFloat(importForm.latitude);
+    const lng = parseFloat(importForm.longitude);
+    const radius = parseInt(importForm.radiusMeters, 10);
+
+    if (!importForm.locationName.trim()) {
+      setImportResult({ success: false, message: 'Location name is required' });
+      return;
+    }
+    if (isNaN(lat) || isNaN(lng)) {
+      setImportResult({ success: false, message: 'Valid latitude and longitude are required' });
+      return;
+    }
+    if (isNaN(radius) || radius < 1000) {
+      setImportResult({ success: false, message: 'Radius must be at least 1000 meters' });
+      return;
+    }
+
+    setImporting(true);
+    setImportResult(null);
+
+    const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';
+    
+    if (!GOOGLE_PLACES_API_KEY) {
+      setImportResult({ success: false, message: 'EXPO_PUBLIC_GOOGLE_PLACES_API_KEY not configured in .env.local' });
+      setImporting(false);
+      return;
+    }
+
+    try {
+      // Get category type for Google Places
+      const placeType = importForm.category.toLowerCase() === 'mosque' ? 'mosque' 
+        : importForm.category.toLowerCase() === 'school' ? 'school'
+        : importForm.category.toLowerCase() === 'restaurant' ? 'restaurant'
+        : importForm.category.toLowerCase() === 'hospital' ? 'hospital'
+        : 'point_of_interest';
+
+      // Fetch existing google_place_ids to avoid duplicates
+      const { data: existingPlaces, error: fetchError } = await supabase
+        .from('places')
+        .select('google_place_id')
+        .not('google_place_id', 'is', null);
+
+      if (fetchError) {
+        setImportResult({ success: false, message: `Database error: ${fetchError.message}` });
+        setImporting(false);
+        return;
+      }
+
+      const existingIds = new Set((existingPlaces || []).map((p) => p.google_place_id));
+
+      // Search nearby places
+      const nearbyUrl = 'https://places.googleapis.com/v1/places:searchNearby';
+      const nearbyBody = {
+        includedTypes: [placeType],
+        maxResultCount: 20,
+        locationRestriction: {
+          circle: {
+            center: { latitude: lat, longitude: lng },
+            radius: radius,
+          },
+        },
+      };
+
+      const nearbyResponse = await fetch(nearbyUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types',
+        },
+        body: JSON.stringify(nearbyBody),
+      });
+
+      if (!nearbyResponse.ok) {
+        const errorText = await nearbyResponse.text();
+        setImportResult({ success: false, message: `Google Places API error: ${nearbyResponse.status} - ${errorText}` });
+        setImporting(false);
+        return;
+      }
+
+      const nearbyData = await nearbyResponse.json();
+      const nearbyResults = nearbyData.places || [];
+
+      // Text search as backup
+      const textUrl = 'https://places.googleapis.com/v1/places:searchText';
+      const textBody = {
+        textQuery: `${importForm.category.toLowerCase()}s in ${importForm.locationName}`,
+        maxResultCount: 20,
+      };
+
+      const textResponse = await fetch(textUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.types',
+        },
+        body: JSON.stringify(textBody),
+      });
+
+      let textResults: typeof nearbyResults = [];
+      if (textResponse.ok) {
+        const textData = await textResponse.json();
+        textResults = textData.places || [];
+      }
+
+      const combined = [...nearbyResults, ...textResults];
+      let skipped = 0;
+
+      // Parse address helper
+      const parseAddress = (formattedAddress: string) => {
+        const parts = formattedAddress.split(',').map((p) => p.trim());
+        let city: string | null = null;
+        let state: string | null = null;
+        if (parts.length >= 3) {
+          city = parts[parts.length - 3] || null;
+          const stateZip = parts[parts.length - 2] || '';
+          const stateMatch = stateZip.match(/^([A-Z]{2})\s/);
+          if (stateMatch) state = stateMatch[1];
+        }
+        return { city, state };
+      };
+
+      // Deduplicate and prepare inserts
+      const allPlaces = new Map<string, {
+        name: string;
+        category: string;
+        address: string | null;
+        city: string | null;
+        state: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        google_place_id: string;
+        source: string;
+        verified: boolean;
+        tags: string[];
+      }>();
+
+      for (const place of combined) {
+        if (!place.id) continue;
+        if (existingIds.has(place.id) || allPlaces.has(place.id)) {
+          skipped++;
+          continue;
+        }
+        const { city, state } = parseAddress(place.formattedAddress || '');
+        allPlaces.set(place.id, {
+          name: place.displayName?.text || `Unknown ${importForm.category}`,
+          category: importForm.category,
+          address: place.formattedAddress || null,
+          city,
+          state,
+          latitude: place.location?.latitude || null,
+          longitude: place.location?.longitude || null,
+          google_place_id: place.id,
+          source: 'google_places',
+          verified: false,
+          tags: [],
+        });
+      }
+
+      if (allPlaces.size === 0) {
+        setImportResult({
+          success: true,
+          message: 'No new places to import. Database is up to date!',
+          stats: { found: combined.length, inserted: 0, skipped, errors: 0 },
+        });
+        setImporting(false);
+        return;
+      }
+
+      // Insert places
+      const placesArray = Array.from(allPlaces.values());
+      const { error: insertError } = await supabase.from('places').insert(placesArray);
+
+      if (insertError) {
+        setImportResult({
+          success: false,
+          message: `Insert error: ${insertError.message}`,
+          stats: { found: combined.length, inserted: 0, skipped, errors: placesArray.length },
+        });
+      } else {
+        setImportResult({
+          success: true,
+          message: `Import complete! Inserted ${placesArray.length} ${importForm.category.toLowerCase()}s.`,
+          stats: { found: combined.length, inserted: placesArray.length, skipped, errors: 0 },
+        });
+        void load();
+      }
+    } catch (err) {
+      setImportResult({
+        success: false,
+        message: err instanceof Error ? err.message : 'Import failed',
+      });
+    } finally {
+      setImporting(false);
+    }
+  }, [importForm, load]);
+
+  const closeImportModal = useCallback(() => {
+    setShowImportModal(false);
+    setImportResult(null);
+    setImportForm({
+      locationName: '',
+      latitude: '',
+      longitude: '',
+      radiusMeters: '15000',
+      category: 'Mosque',
+    });
   }, []);
 
   const fetchCoords = useCallback(() => {
@@ -427,9 +655,47 @@ export default function AdminPlaces() {
           <TouchableOpacity style={styles.secondaryButton} onPress={() => void load()} disabled={loading || saving || mode !== 'list'}>
             <Text style={styles.secondaryButtonText}>Refresh</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.primaryButton} onPress={startCreate} disabled={loading || saving || mode !== 'list'}>
-            <Text style={styles.primaryButtonText}>New</Text>
-          </TouchableOpacity>
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => setShowNewDropdown(!showNewDropdown)}
+              disabled={loading || saving || mode !== 'list'}
+            >
+              <Text style={styles.primaryButtonText}>New ▾</Text>
+            </TouchableOpacity>
+            {showNewDropdown && (
+              <View style={styles.dropdownMenu}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setShowNewDropdown(false);
+                    startCreate();
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>Create New Place</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setShowNewDropdown(false);
+                    // TODO: Import from sheet
+                    alert('Import from Sheet coming soon!');
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>Import from Sheet</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setShowNewDropdown(false);
+                    setShowImportModal(true);
+                  }}
+                >
+                  <Text style={styles.dropdownItemText}>Import from Maps</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
@@ -507,6 +773,103 @@ export default function AdminPlaces() {
               <Field label="Source" value={draft.source} onChange={(v) => setDraft((d) => ({ ...d, source: v }))} />
 
               {mode === 'edit' && selected && <Text style={styles.meta}>id: {selected.id}</Text>}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Import from Maps Modal */}
+      <Modal
+        visible={showImportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closeImportModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Import from Google Maps</Text>
+              <View style={styles.modalHeaderRight}>
+                <TouchableOpacity style={styles.secondaryButton} onPress={closeImportModal} disabled={importing}>
+                  <Text style={styles.secondaryButtonText}>Close</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.primaryButton} onPress={() => void runImport()} disabled={importing}>
+                  {importing ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Import</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {importResult && (
+              <View style={[styles.importResultBox, importResult.success ? styles.importResultSuccess : styles.importResultError]}>
+                <Text style={styles.importResultText}>{importResult.message}</Text>
+                {importResult.stats && (
+                  <View style={styles.importStats}>
+                    <Text style={styles.importStatText}>Found: {importResult.stats.found}</Text>
+                    <Text style={styles.importStatText}>Inserted: {importResult.stats.inserted}</Text>
+                    <Text style={styles.importStatText}>Skipped: {importResult.stats.skipped}</Text>
+                    {importResult.stats.errors > 0 && (
+                      <Text style={[styles.importStatText, styles.importStatError]}>Errors: {importResult.stats.errors}</Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
+            <ScrollView contentContainerStyle={styles.formContent}>
+              <Field
+                label="Location Name (e.g., Ikorodu, Lagos)"
+                value={importForm.locationName}
+                onChange={(v) => setImportForm((f) => ({ ...f, locationName: v }))}
+              />
+              <Field
+                label="Latitude"
+                value={importForm.latitude}
+                onChange={(v) => setImportForm((f) => ({ ...f, latitude: v }))}
+              />
+              <Field
+                label="Longitude"
+                value={importForm.longitude}
+                onChange={(v) => setImportForm((f) => ({ ...f, longitude: v }))}
+              />
+              <Field
+                label="Radius (meters)"
+                value={importForm.radiusMeters}
+                onChange={(v) => setImportForm((f) => ({ ...f, radiusMeters: v }))}
+              />
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Category</Text>
+                <View style={styles.categoryButtons}>
+                  {['Mosque', 'School', 'Restaurant', 'Hospital'].map((cat) => (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[
+                        styles.categoryButton,
+                        importForm.category === cat && styles.categoryButtonActive,
+                      ]}
+                      onPress={() => setImportForm((f) => ({ ...f, category: cat }))}
+                    >
+                      <Text
+                        style={[
+                          styles.categoryButtonText,
+                          importForm.category === cat && styles.categoryButtonTextActive,
+                        ]}
+                      >
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.importHelpBox}>
+                <Text style={styles.importHelpTitle}>How to find coordinates:</Text>
+                <Text style={styles.importHelpText}>
+                  1. Open Google Maps{'\n'}
+                  2. Right-click on the center of the area{'\n'}
+                  3. Click the coordinates to copy them{'\n'}
+                  4. Paste here (format: lat, lng)
+                </Text>
+              </View>
             </ScrollView>
           </View>
         </View>
@@ -897,5 +1260,114 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
     fontFamily: 'Quicksand_700Bold',
+  },
+  dropdownContainer: {
+    position: 'relative',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: 4,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EBEBEF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 1000,
+    minWidth: 180,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EBEBEF',
+  },
+  dropdownItemText: {
+    fontSize: 13,
+    color: '#000',
+    fontFamily: 'Quicksand_500Medium',
+  },
+  importResultBox: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  importResultSuccess: {
+    backgroundColor: '#e8f5e9',
+    borderWidth: 1,
+    borderColor: '#4caf50',
+  },
+  importResultError: {
+    backgroundColor: '#ffebee',
+    borderWidth: 1,
+    borderColor: '#f44336',
+  },
+  importResultText: {
+    fontSize: 13,
+    color: '#000',
+    fontFamily: 'Quicksand_600SemiBold',
+  },
+  importStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  importStatText: {
+    fontSize: 12,
+    color: '#454745',
+    fontFamily: 'Quicksand_500Medium',
+  },
+  importStatError: {
+    color: '#b00020',
+  },
+  categoryButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 6,
+  },
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#EBEBEF',
+    backgroundColor: '#fff',
+  },
+  categoryButtonActive: {
+    backgroundColor: '#000',
+    borderColor: '#000',
+  },
+  categoryButtonText: {
+    fontSize: 13,
+    color: '#000',
+    fontFamily: 'Quicksand_500Medium',
+  },
+  categoryButtonTextActive: {
+    color: '#fff',
+  },
+  importHelpBox: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#F9F7F2',
+    borderRadius: 8,
+  },
+  importHelpTitle: {
+    fontSize: 13,
+    color: '#000',
+    fontFamily: 'Quicksand_600SemiBold',
+    marginBottom: 6,
+  },
+  importHelpText: {
+    fontSize: 12,
+    color: '#454745',
+    fontFamily: 'Quicksand_500Medium',
+    lineHeight: 18,
   },
 });

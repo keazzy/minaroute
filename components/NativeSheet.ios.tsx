@@ -30,10 +30,12 @@ export type NativeSheetProps = {
   enableBackdropDismiss?: boolean;
   /** If true, sheet opens at large detent only (for modal sheets like Submit Place) */
   expandedOnly?: boolean;
+  /** If true, sheet opens at medium height (fit to content for pickers) */
+  mediumOnly?: boolean;
 };
 
 export const NativeSheet = forwardRef<NativeSheetRef, NativeSheetProps>(
-  ({ children, onDismiss, enablePanDownToClose = true, expandedOnly = false }, ref) => {
+  ({ children, onDismiss, enablePanDownToClose = true, expandedOnly = false, mediumOnly = false }, ref) => {
     const [isPresented, setIsPresented] = useState(false);
     const { width, height } = useWindowDimensions();
 
@@ -57,13 +59,15 @@ export const NativeSheet = forwardRef<NativeSheetRef, NativeSheetProps>(
       [onDismiss, enablePanDownToClose]
     );
 
-    // Determine detents based on sheet type
-    // Use fractions for precise control
-    console.log('NativeSheet expandedOnly:', expandedOnly);
-    const detents: PresentationDetent[] = expandedOnly
-      ? ['large']
-      : [{ fraction: 0.4 }, 'large'];
-    console.log('NativeSheet detents:', detents);
+    // Determine detents based on props
+    let detents: PresentationDetent[];
+    if (mediumOnly) {
+      detents = [{ fraction: 0.38 }]; // Smaller fraction for picker sheets
+    } else if (expandedOnly) {
+      detents = ['large'];
+    } else {
+      detents = [{ fraction: 0.4 }, 'large'];
+    }
 
     // Build modifiers array
     const modifiers = [
@@ -73,7 +77,7 @@ export const NativeSheet = forwardRef<NativeSheetRef, NativeSheetProps>(
 
     // Only add background interaction for non-expanded sheets (home sheet)
     // Enable map interaction when at the smaller detent
-    if (!expandedOnly) {
+    if (!expandedOnly && !mediumOnly) {
       modifiers.push(presentationBackgroundInteraction({ detent: { fraction: 0.4 } }));
     }
 
@@ -83,8 +87,14 @@ export const NativeSheet = forwardRef<NativeSheetRef, NativeSheetProps>(
     }
 
     // Calculate content height based on detent
-    // Medium is roughly 50% of screen, large is ~90%
-    const contentHeight = expandedOnly ? height * 0.9 : height * 0.85;
+    let contentHeight: number;
+    if (mediumOnly) {
+      contentHeight = height * 0.35; // Smaller height for picker sheets
+    } else if (expandedOnly) {
+      contentHeight = height * 0.9;
+    } else {
+      contentHeight = height * 0.85;
+    }
 
     return (
       <Host style={{ position: 'absolute', width: 0, height: 0 }} pointerEvents="box-none">

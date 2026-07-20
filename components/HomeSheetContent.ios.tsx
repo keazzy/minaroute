@@ -2,7 +2,8 @@
 import CategoryCard from '@/components/CategoryCard';
 import PlaceCard, { CardType } from '@/components/place-card';
 import { CATEGORIES, Category } from '@/constants/mockData';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type PlaceItem = {
@@ -22,15 +23,15 @@ type Props = {
   onPlacePress: (place: { id: string }) => void;
 };
 
-function ShimmerBlock({ style }: { style?: any }) {
+function ShimmerBlock({ style, isDark = false }: { style?: any; isDark?: boolean }) {
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.timing(shimmer, {
         toValue: 1,
-        duration: 1100,
-        easing: Easing.inOut(Easing.ease),
+        duration: 900,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
         useNativeDriver: true,
       })
     );
@@ -44,12 +45,13 @@ function ShimmerBlock({ style }: { style?: any }) {
   });
 
   return (
-    <View style={[styles.skeletonBase, style]}>
+    <View style={[styles.skeletonBase, { backgroundColor: isDark ? '#3a3a3a' : '#ececec' }, style]}>
       <Animated.View
         pointerEvents="none"
         style={[
           styles.skeletonShimmer,
           {
+            backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)',
             transform: [{ translateX }],
           },
         ]}
@@ -58,18 +60,18 @@ function ShimmerBlock({ style }: { style?: any }) {
   );
 }
 
-function NearbySkeletonCard() {
+function NearbySkeletonCard({ isDark = false }: { isDark?: boolean }) {
   return (
-    <View style={styles.skeletonCard}>
-      <ShimmerBlock style={styles.skeletonImage} />
+    <View style={[styles.skeletonCard, { backgroundColor: isDark ? '#2a2a2a' : '#f9f6f4' }]}>
+      <ShimmerBlock style={styles.skeletonImage} isDark={isDark} />
       <View style={styles.skeletonBody}>
         <View>
-          <ShimmerBlock style={styles.skeletonLinePrimary} />
-          <ShimmerBlock style={styles.skeletonLineSecondary} />
+          <ShimmerBlock style={styles.skeletonLinePrimary} isDark={isDark} />
+          <ShimmerBlock style={styles.skeletonLineSecondary} isDark={isDark} />
         </View>
         <View style={styles.skeletonBadgeRow}>
-          <ShimmerBlock style={styles.skeletonBadge} />
-          <ShimmerBlock style={styles.skeletonBadge} />
+          <ShimmerBlock style={styles.skeletonBadge} isDark={isDark} />
+          <ShimmerBlock style={styles.skeletonBadge} isDark={isDark} />
         </View>
       </View>
     </View>
@@ -77,6 +79,18 @@ function NearbySkeletonCard() {
 }
 
 export function HomeSheetContent({ places, isLoading, onCategoryPress, onPlacePress }: Props) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  
+  const dynamicStyles = useMemo(() => ({
+    greetingText: { color: isDark ? '#fff' : '#0c0c0f' },
+    subGreetingText: { color: isDark ? '#9BA1A6' : '#454745' },
+    sectionHeader: { color: isDark ? '#fff' : '#0c0c0f' },
+    emptyText: { color: isDark ? '#9BA1A6' : '#454745' },
+    skeletonCard: { backgroundColor: isDark ? '#2a2a2a' : '#f9f6f4' },
+    skeletonBase: { backgroundColor: isDark ? '#3a3a3a' : '#ececec' },
+  }), [isDark]);
+
   const renderCategoryItem = useCallback(
     ({ item }: { item: Category }) => (
       <CategoryCard
@@ -95,8 +109,8 @@ export function HomeSheetContent({ places, isLoading, onCategoryPress, onPlacePr
     >
       {/* Greeting */}
       <View style={styles.greetingContainer}>
-        <Text style={styles.greetingText}>As salam alykum</Text>
-        <Text style={styles.subGreetingText}>What would you like you find today?</Text>
+        <Text style={[styles.greetingText, dynamicStyles.greetingText]}>As salam alykum</Text>
+        <Text style={[styles.subGreetingText, dynamicStyles.subGreetingText]}>What would you like you find today?</Text>
       </View>
 
       {/* Categories */}
@@ -113,21 +127,21 @@ export function HomeSheetContent({ places, isLoading, onCategoryPress, onPlacePr
 
       {/* Section Header */}
       <View style={styles.sectionHeaderContainer}>
-        <Text style={styles.sectionHeader}>Based on your location</Text>
+        <Text style={[styles.sectionHeader, dynamicStyles.sectionHeader]}>Based on your location</Text>
       </View>
 
       {/* Places List */}
       {isLoading ? (
         <View style={styles.placesContainer}>
-          <NearbySkeletonCard />
+          <NearbySkeletonCard isDark={isDark} />
           <View style={{ height: 12 }} />
-          <NearbySkeletonCard />
+          <NearbySkeletonCard isDark={isDark} />
           <View style={{ height: 12 }} />
-          <NearbySkeletonCard />
+          <NearbySkeletonCard isDark={isDark} />
         </View>
       ) : places.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No places nearby yet.</Text>
+          <Text style={[styles.emptyText, dynamicStyles.emptyText]}>No places nearby yet.</Text>
         </View>
       ) : (
         <View style={styles.placesContainer}>

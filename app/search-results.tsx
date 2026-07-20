@@ -1,12 +1,15 @@
-import EventDetailsContent from '@/components/event-details-content';
-import PlaceCard from '@/components/place-card';
-import { Colors } from '@/constants/theme';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Picker } from '@react-native-picker/picker';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import LottieView from 'lottie-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, Easing, FlatList, Linking, Modal, Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Easing, FlatList, Linking, Modal, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { G, Path } from 'react-native-svg';
+import EventDetailsContent from '../components/event-details-content';
+import PlaceCard from '../components/place-card';
+import { Colors } from '../constants/theme';
+import { categoryToPlaceType, extractSearchIntent } from '../utils/nlp-search';
 
 const SUPABASE_URL = 'https://spjlyhmgqtkcqhpvgxci.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -77,6 +80,15 @@ const TYPE_OPTIONS: { label: string; value: PlaceType | 'All' }[] = [
   { label: 'Events', value: 'Event' },
 ];
 
+// Dynamic tags based on selected type
+const TAGS_BY_TYPE: Record<PlaceType | 'All', string[]> = {
+  All: [],
+  Mosque: ['Prayer Room', 'Masjid', 'Jumah', 'Central Mosque'],
+  School: ['Tahfeez', 'Quranic', 'Western', 'Madrasah', 'Islamic Studies'],
+  Event: ['Lecture/Talk', 'Workshop/Class', 'Social Gathering', 'Fundraiser/Charity', 'Community Iftar', 'Eid Celebration', 'Jummah Gathering', 'Halaqah', 'Conference'],
+  'Halal Food': ['Restaurant', 'Cafe', 'Grocery', 'Catering', 'Food Truck'],
+};
+
 function mapCategoryToType(category: string): PlaceType | null {
   const lower = category.trim().toLowerCase();
   if (lower.includes('mosque')) return 'Mosque';
@@ -93,8 +105,8 @@ function ShimmerBlock({ style }: { style?: any }) {
     const anim = Animated.loop(
       Animated.timing(shimmer, {
         toValue: 1,
-        duration: 1100,
-        easing: Easing.inOut(Easing.ease),
+        duration: 900,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
         useNativeDriver: true,
       })
     );
@@ -153,13 +165,36 @@ function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+// SVG Icon Components from MingCute
+function CloseCircleFillIcon({ size = 20, color = '#000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <G fill="none">
+        <Path d="M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z"/>
+        <Path fill={color} d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2M9.879 8.464a1 1 0 0 0-1.498 1.32l.084.095 2.12 2.12-2.12 2.122a1 1 0 0 0 1.32 1.498l.094-.083L12 13.414l2.121 2.122a1 1 0 0 0 1.498-1.32l-.083-.095L13.414 12l2.122-2.121a1 1 0 0 0-1.32-1.498l-.095.083L12 10.586z"/>
+      </G>
+    </Svg>
+  );
+}
+
+function CheckCircleFillIcon({ size = 20, color = '#000' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <G fill="none">
+        <Path d="M24 0v24H0V0zM12.593 23.258l-.011.002-.071.035-.02.004-.014-.004-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427c-.002-.01-.009-.017-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093c.012.004.023 0 .029-.008l.004-.014-.034-.614c-.003-.012-.01-.02-.02-.022m-.715.002a.023.023 0 0 0-.027.006l-.006.014-.034.614c0 .012.007.02.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z"/>
+        <Path fill={color} d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2m3.535 6.381-4.95 4.95-2.12-2.121a1 1 0 0 0-1.415 1.414l2.758 2.758a1.1 1.1 0 0 0 1.556 0l5.586-5.586a1 1 0 0 0-1.415-1.415"/>
+      </G>
+    </Svg>
+  );
+}
+
 function MingcuteIcon({
   name,
   size = 20,
   color = '#000',
   style,
 }: {
-  name: 'left_line' | 'search_line' | 'settings_6_line' | 'right_small_line';
+  name: 'left_line' | 'search_line' | 'right_small_line';
   size?: number;
   color?: string;
   style?: any;
@@ -167,7 +202,6 @@ function MingcuteIcon({
   const glyph = {
     left_line: 0xeff7,
     search_line: 0xf30d,
-    settings_6_line: 0xf333,
     right_small_line: 0xf291,
   }[name];
 
@@ -192,6 +226,23 @@ function MingcuteIcon({
 export default function SearchResultsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string; searchQuery?: string; focus?: string }>();
+  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const dynamicColors = useMemo(() => ({
+    background: isDark ? '#151718' : '#fff',
+    text: isDark ? '#fff' : '#000',
+    textSecondary: isDark ? '#9BA1A6' : '#454745',
+    sheetBg: isDark ? '#1c1c1e' : '#fff',
+    cardBg: isDark ? '#2a2a2a' : '#fff',
+    border: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    inputBg: isDark ? '#2a2a2a' : '#fff',
+    placeholder: isDark ? '#9BA1A6' : '#6a6c6a',
+    filterChipBg: isDark ? '#2a2a2a' : '#fff',
+    filterChipActiveBg: isDark ? '#3a3a3a' : '#0c0c0f',
+    dragIndicator: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.15)',
+  }), [isDark]);
 
   const initialCategory = typeof params.category === 'string' ? params.category : '';
   const initialSearchQuery = typeof params.searchQuery === 'string' ? params.searchQuery : '';
@@ -208,6 +259,8 @@ export default function SearchResultsScreen() {
     return fromCategory ?? 'All';
   });
   const [amenityFilter, setAmenityFilter] = useState<string | 'All'>('All');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagsSheetOpen, setTagsSheetOpen] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<Extract<ListItem, { type: 'Event' }> | null>(null);
@@ -227,6 +280,26 @@ export default function SearchResultsScreen() {
 
   const openTypePicker = useCallback(() => {
     setTypePickerOpen(true);
+  }, []);
+
+  // Get available tags based on selected type
+  const availableTags = useMemo(() => {
+    return TAGS_BY_TYPE[typeFilter] || [];
+  }, [typeFilter]);
+
+  // Clear selected tags when type changes
+  useEffect(() => {
+    setSelectedTags([]);
+  }, [typeFilter]);
+
+  const toggleTag = useCallback((tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  }, []);
+
+  const clearAllTags = useCallback(() => {
+    setSelectedTags([]);
   }, []);
 
   useEffect(() => {
@@ -394,26 +467,86 @@ export default function SearchResultsScreen() {
   }, [initialCategory, initialSearchQuery, searchText]);
 
   const isEmptySearchState = useMemo(() => {
-    return !initialCategory && !searchText.trim();
-  }, [initialCategory, searchText]);
+    return !initialCategory && !searchText.trim() && typeFilter === 'All';
+  }, [initialCategory, searchText, typeFilter]);
 
   const filteredPlaces = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
+    const q = searchText.trim();
     const categoryType = initialCategory ? mapCategoryToType(initialCategory) : null;
 
     let list: ListItem[] = [...places, ...events];
 
+    // Apply category from URL params first
     if (categoryType) {
       list = list.filter((p) => p.type === categoryType);
     }
 
-    if (q) {
+    // Extract NLP intent from search query
+    const intent = q ? extractSearchIntent(q) : null;
+    
+    if (intent && intent.isNaturalLanguage) {
+      // Natural language query - use structured filtering
+      
+      // Filter by extracted category (if not already filtered by URL param)
+      if (!categoryType && intent.category) {
+        const nlpType = categoryToPlaceType(intent.category);
+        if (nlpType) {
+          list = list.filter((p) => p.type === nlpType);
+        }
+      }
+      
+      // Filter by extracted location (partial match on address)
+      if (intent.location) {
+        const locationLower = intent.location.toLowerCase();
+        list = list.filter((p) => {
+          const addressLower = p.address.toLowerCase();
+          return addressLower.includes(locationLower);
+        });
+      }
+      
+      // Filter by extracted tags
+      if (intent.tags.length > 0) {
+        list = list.filter((p) => {
+          const itemTagsLower = p.tags.map(t => t.toLowerCase());
+          const nameAndDescLower = p.name.toLowerCase();
+          return intent.tags.some((intentTag: string) => 
+            itemTagsLower.some(itemTag => itemTag.includes(intentTag.toLowerCase())) ||
+            nameAndDescLower.includes(intentTag.toLowerCase())
+          );
+        });
+      }
+      
+      // Handle "near me" from NLP - enable nearMe filtering
+      const shouldUseNearMe = intent.useUserLocation || nearMe;
+      
+      if (userCoords && shouldUseNearMe) {
+        const withCoords = list.filter((p): p is Place => {
+          return (
+            (p as Place).coordinate != null &&
+            typeof (p as Place).coordinate?.latitude === 'number' &&
+            typeof (p as Place).coordinate?.longitude === 'number'
+          );
+        });
+        
+        const withDistance = withCoords
+          .map((p) => ({ place: p, distanceKm: haversineKm(userCoords, p.coordinate) }))
+          .filter((x) => Number.isFinite(x.distanceKm));
+        
+        return withDistance
+          .filter((x) => x.distanceKm <= 10)
+          .sort((a, b) => a.distanceKm - b.distanceKm)
+          .map((x) => x.place);
+      }
+    } else if (q) {
+      // Simple keyword search - existing behavior
+      const qLower = q.toLowerCase();
       list = list.filter((p) => {
         const haystack = `${p.name} ${p.address} ${p.type} ${p.tags.join(' ')}`.toLowerCase();
-        return haystack.includes(q);
+        return haystack.includes(qLower);
       });
     }
 
+    // Apply manual filters (type pill, amenity pill, tags pill)
     if (typeFilter !== 'All') {
       list = list.filter((p) => p.type === typeFilter);
     }
@@ -422,6 +555,15 @@ export default function SearchResultsScreen() {
       list = list.filter((p) => p.tags.some((t) => t.toLowerCase() === String(amenityFilter).toLowerCase()));
     }
 
+    if (selectedTags.length > 0) {
+      list = list.filter((p) => 
+        selectedTags.some((tag) => 
+          p.tags.some((t) => t.toLowerCase().includes(tag.toLowerCase()))
+        )
+      );
+    }
+
+    // Distance sorting and near me filtering (for non-NLP queries or when manually enabled)
     if (userCoords) {
       const withCoords = list.filter((p): p is Place => {
         return (
@@ -449,7 +591,7 @@ export default function SearchResultsScreen() {
     }
 
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
-  }, [amenityFilter, events, initialCategory, nearMe, places, searchText, typeFilter, userCoords]);
+  }, [amenityFilter, events, initialCategory, nearMe, places, searchText, selectedTags, typeFilter, userCoords]);
 
   const renderCard = useCallback(
     (place: ListItem) => {
@@ -492,59 +634,100 @@ export default function SearchResultsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: dynamicColors.background, paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.headerIconButton} onPress={() => router.back()} activeOpacity={0.8}>
-          <MingcuteIcon name="left_line" size={20} color="#000" />
+        <TouchableOpacity style={[styles.headerIconButton, { backgroundColor: dynamicColors.inputBg }]} onPress={() => router.back()} activeOpacity={0.8}>
+          <MingcuteIcon name="left_line" size={20} color={dynamicColors.text} />
         </TouchableOpacity>
 
-        <View style={styles.searchContainer}>
-          <MingcuteIcon name="search_line" size={24} color="#000" />
+        <View style={[styles.searchContainer, { backgroundColor: dynamicColors.inputBg, borderColor: dynamicColors.border }]}>
+          <MingcuteIcon name="search_line" size={24} color={dynamicColors.text} />
           <TextInput
             ref={searchInputRef}
             value={searchText}
             onChangeText={setSearchText}
             placeholder="Search mosques, halal food, schools…"
-            placeholderTextColor="#6a6c6a"
-            style={styles.searchInput}
+            placeholderTextColor={dynamicColors.placeholder}
+            style={[styles.searchInput, { color: dynamicColors.text }]}
             returnKeyType="search"
           />
+          {searchText.length > 0 && (
+            <TouchableOpacity 
+              style={styles.searchClearButton} 
+              onPress={() => setSearchText('')}
+              activeOpacity={0.7}
+            >
+              <CloseCircleFillIcon size={20} color={dynamicColors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
 
-        <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8}>
-          <MingcuteIcon name="settings_6_line" size={20} color="#000" />
-        </TouchableOpacity>
+        {/* AI Button */}
+          <TouchableOpacity 
+            style={[styles.headerIconButton, { backgroundColor: dynamicColors.cardBg, borderColor: dynamicColors.border }]} 
+            onPress={() => Alert.alert('Coming Soon', 'AI features are coming soon!')}
+            activeOpacity={0.8}
+          >
+            <LottieView
+              source={{ uri: 'https://lottie.host/f70b4dce-b6a5-4e8a-afdc-47acf9c48440/SvXJ2qvt0V.lottie' }}
+              autoPlay
+              loop
+              style={{ width: 56, height: 56 }}
+            />
+          </TouchableOpacity>
       </View>
 
       {!isEmptySearchState && (
         <View style={styles.resultsHeader}>
-          <Text style={styles.resultsHeaderText}>
+          <Text style={[styles.resultsHeaderText, { color: dynamicColors.textSecondary }]}>
             <Text>Showing you results for </Text>
-            <Text style={styles.resultsHeaderBold}>{shownQueryLabel}</Text>
+            <Text style={[styles.resultsHeaderBold, { color: dynamicColors.text }]}>{shownQueryLabel}</Text>
           </Text>
 
           <View style={styles.filtersRow}>
+            {/* Near Me pill with X button when active */}
             <TouchableOpacity
-              style={[styles.filterChip, nearMe ? styles.filterChipActive : null]}
+              style={[styles.filterChip, { backgroundColor: nearMe ? dynamicColors.filterChipActiveBg : dynamicColors.filterChipBg }]}
               onPress={() => setNearMe((v) => !v)}
               activeOpacity={0.85}
             >
-              <Text style={styles.filterChipText}>Near me</Text>
+              <Text style={[styles.filterChipText, { color: nearMe ? '#fff' : dynamicColors.text }]}>Near me</Text>
+              {nearMe && (
+                <View style={styles.filterChipCloseIcon}>
+                  <CloseCircleFillIcon size={16} color="#fff" />
+                </View>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.filterChip} onPress={openTypePicker} activeOpacity={0.85}>
-              <Text style={styles.filterChipText}>Type</Text>
+            {/* Type pill showing selected category */}
+            <TouchableOpacity 
+              style={[styles.filterChip, { backgroundColor: typeFilter !== 'All' ? dynamicColors.filterChipActiveBg : dynamicColors.filterChipBg }]} 
+              onPress={openTypePicker} 
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.filterChipText, { color: typeFilter !== 'All' ? '#fff' : dynamicColors.text }]}>
+                {typeFilter === 'All' ? 'Type' : typeFilter}
+              </Text>
               <View style={styles.filterChipChevronIcon}>
-                <MingcuteIcon name="right_small_line" size={16} color="#000" style={styles.filterChipChevronGlyph} />
+                <MingcuteIcon name="right_small_line" size={16} color={typeFilter !== 'All' ? '#fff' : dynamicColors.text} style={styles.filterChipChevronGlyph} />
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.filterChip} onPress={() => setPickerOpen('amenities')} activeOpacity={0.85}>
-              <Text style={styles.filterChipText}>Ammenties</Text>
-              <View style={styles.filterChipChevronIcon}>
-                <MingcuteIcon name="right_small_line" size={16} color="#000" style={styles.filterChipChevronGlyph} />
-              </View>
-            </TouchableOpacity>
+            {/* Tags pill - only show when type is selected and has tags */}
+            {availableTags.length > 0 && (
+              <TouchableOpacity 
+                style={[styles.filterChip, { backgroundColor: selectedTags.length > 0 ? dynamicColors.filterChipActiveBg : dynamicColors.filterChipBg }]} 
+                onPress={() => setTagsSheetOpen(true)} 
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.filterChipText, { color: selectedTags.length > 0 ? '#fff' : dynamicColors.text }]}>
+                  {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Tags'}
+                </Text>
+                <View style={styles.filterChipChevronIcon}>
+                  <MingcuteIcon name="right_small_line" size={16} color={selectedTags.length > 0 ? '#fff' : dynamicColors.text} style={styles.filterChipChevronGlyph} />
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
@@ -553,10 +736,36 @@ export default function SearchResultsScreen() {
         {isEmptySearchState ? (
           <View style={styles.emptyStateContainer}>
             <View style={styles.emptyStateTextWrap}>
-              <Text style={styles.emptyStateTitle}>No result yet</Text>
-              <Text style={styles.emptyStateSubtitle}>
+              <Text style={[styles.emptyStateTitle, { color: dynamicColors.text }]}>No result yet</Text>
+              <Text style={[styles.emptyStateSubtitle, { color: dynamicColors.textSecondary }]}>
                 Start typing to find mosque, schools, madarasah and events around you
               </Text>
+            </View>
+            <View style={styles.quickSearchContainer}>
+              <Text style={[styles.quickSearchLabel, { color: dynamicColors.textSecondary }]}>Quick search</Text>
+              <View style={styles.quickSearchButtons}>
+                <TouchableOpacity 
+                  style={[styles.quickSearchButton, { backgroundColor: dynamicColors.filterChipBg }]} 
+                  onPress={() => setTypeFilter('Mosque')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.quickSearchButtonText, { color: dynamicColors.text }]}>Mosques</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.quickSearchButton, { backgroundColor: dynamicColors.filterChipBg }]} 
+                  onPress={() => setTypeFilter('School')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.quickSearchButtonText, { color: dynamicColors.text }]}>Schools</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.quickSearchButton, { backgroundColor: dynamicColors.filterChipBg }]} 
+                  onPress={() => setTypeFilter('Event')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.quickSearchButtonText, { color: dynamicColors.text }]}>Events</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         ) : (
@@ -575,7 +784,7 @@ export default function SearchResultsScreen() {
                 </View>
               ) : showNearMeDenied ? (
                 <View style={styles.listStateContainer}>
-                  <Text style={styles.listStateTitle}>Turn on location to use Near me.</Text>
+                  <Text style={[styles.listStateTitle, { color: dynamicColors.textSecondary }]}>Turn on location to use Near me.</Text>
                   <TouchableOpacity
                     activeOpacity={0.85}
                     style={styles.listStateButton}
@@ -592,11 +801,31 @@ export default function SearchResultsScreen() {
                 </View>
               ) : nearMe && userCoords && filteredPlaces.length === 0 ? (
                 <View style={styles.listStateContainer}>
-                  <Text style={styles.listStateTitle}>Nothing nearby right now.</Text>
+                  <Text style={[styles.listStateTitle, { color: dynamicColors.textSecondary }]}>Nothing nearby right now.</Text>
+                  {(selectedTags.length > 0 || typeFilter !== 'All') && (
+                    <Text style={[styles.listStateSubtitle, { color: dynamicColors.textSecondary }]}>
+                      Try broadening your search with fewer filters.
+                    </Text>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <TouchableOpacity activeOpacity={0.85} style={styles.listStateButton} onPress={clearAllTags}>
+                      <Text style={styles.listStateButtonText}>Clear Tags</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
                 <View style={styles.listStateContainer}>
-                  <Text style={styles.listStateTitle}>No results.</Text>
+                  <Text style={[styles.listStateTitle, { color: dynamicColors.textSecondary }]}>No results found.</Text>
+                  {(selectedTags.length > 0 || typeFilter !== 'All') && (
+                    <Text style={[styles.listStateSubtitle, { color: dynamicColors.textSecondary }]}>
+                      Try broadening your search with fewer filters.
+                    </Text>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <TouchableOpacity activeOpacity={0.85} style={styles.listStateButton} onPress={clearAllTags}>
+                      <Text style={styles.listStateButtonText}>Clear Tags</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )
             }
@@ -656,6 +885,7 @@ export default function SearchResultsScreen() {
               city={selectedEvent.city}
               photos={selectedEvent.photos}
               description={selectedEvent.description}
+              isDark={isDark}
             />
           )}
         </BottomSheetScrollView>
@@ -666,28 +896,96 @@ export default function SearchResultsScreen() {
           <View />
         </Pressable>
 
-        <View style={styles.pickerSheet}
-        >
-          <View style={styles.pickerHeaderRow}>
+        <View style={[styles.typeSheet, { backgroundColor: isDark ? '#1c1c1e' : '#fff' }]}>
+          <View style={styles.tagsSheetHeader}>
+            <Text style={[styles.tagsSheetTitle, { color: dynamicColors.text }]}>Select Type</Text>
             <TouchableOpacity onPress={() => setTypePickerOpen(false)} activeOpacity={0.8}>
               <Text style={styles.pickerDoneText}>Done</Text>
             </TouchableOpacity>
           </View>
 
-          <Picker
-            selectedValue={typeFilter}
-            onValueChange={(value) => setTypeFilter(value as PlaceType | 'All')}
-            style={styles.nativePicker}
-          >
-            {TYPE_OPTIONS.map((opt) => (
-              <Picker.Item key={opt.label} label={opt.label} value={opt.value} />
-            ))}
-          </Picker>
+          <View style={styles.typeOptionsList}>
+            {TYPE_OPTIONS.map((opt) => {
+              const isSelected = typeFilter === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[
+                    styles.typeOptionRow,
+                    { borderBottomColor: dynamicColors.border }
+                  ]}
+                  onPress={() => {
+                    setTypeFilter(opt.value);
+                    setTypePickerOpen(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.typeOptionRowText, { color: dynamicColors.text }]}>
+                    {opt.label}
+                  </Text>
+                  {isSelected && (
+                    <CheckCircleFillIcon size={20} color={Colors.light.tint} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Tags Selection Modal */}
+      <Modal visible={tagsSheetOpen} transparent animationType="slide" onRequestClose={() => setTagsSheetOpen(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setTagsSheetOpen(false)}>
+          <View />
+        </Pressable>
+
+        <View style={[styles.tagsSheet, { backgroundColor: isDark ? '#1c1c1e' : '#fff' }]}>
+          <View style={styles.tagsSheetHeader}>
+            <Text style={[styles.tagsSheetTitle, { color: dynamicColors.text }]}>
+              {typeFilter === 'All' ? 'Tags' : `${typeFilter} Tags`}
+            </Text>
+            <TouchableOpacity onPress={() => setTagsSheetOpen(false)} activeOpacity={0.8}>
+              <Text style={styles.pickerDoneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          {selectedTags.length > 0 && (
+            <TouchableOpacity style={styles.clearTagsButton} onPress={clearAllTags} activeOpacity={0.8}>
+              <Text style={styles.clearTagsButtonText}>Clear all ({selectedTags.length})</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.tagsGrid}>
+            {availableTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag);
+              return (
+                <TouchableOpacity
+                  key={tag}
+                  style={[
+                    styles.tagChip,
+                    { 
+                      backgroundColor: isSelected ? dynamicColors.filterChipActiveBg : dynamicColors.filterChipBg,
+                      borderColor: isSelected ? 'transparent' : dynamicColors.border,
+                    }
+                  ]}
+                  onPress={() => toggleTag(tag)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.tagChipText, { color: isSelected ? '#fff' : dynamicColors.text }]}>
+                    {tag}
+                  </Text>
+                  {isSelected && (
+                    <CheckCircleFillIcon size={16} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </Modal>
 
       {Platform.OS === 'ios' && <View style={styles.iosHomeIndicatorSpacer} />}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -735,6 +1033,10 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingVertical: 0,
     fontFamily: 'Quicksand_500Medium',
+  },
+  searchClearButton: {
+    padding: 4,
+    marginLeft: 4,
   },
   resultsHeader: {
     paddingHorizontal: 16,
@@ -1012,5 +1314,132 @@ const styles = StyleSheet.create({
   },
   iosHomeIndicatorSpacer: {
     height: 10,
+  },
+  filterChipCloseIcon: {
+    marginLeft: 2,
+  },
+  listStateSubtitle: {
+    fontSize: 13,
+    color: '#454745',
+    textAlign: 'center',
+    fontFamily: 'Quicksand_500Medium',
+    marginTop: 4,
+  },
+  tagsSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+  },
+  tagsSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  tagsSheetTitle: {
+    fontSize: 18,
+    fontFamily: 'Quicksand_700Bold',
+    color: '#000',
+  },
+  clearTagsButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  clearTagsButtonText: {
+    fontSize: 14,
+    color: '#0c6ff9',
+    fontFamily: 'Quicksand_500Medium',
+  },
+  tagsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tagChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  tagChipText: {
+    fontSize: 14,
+    fontFamily: 'Quicksand_500Medium',
+  },
+  typeSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+  },
+  typeOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  typeOptionChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  typeOptionText: {
+    fontSize: 15,
+    fontFamily: 'Quicksand_600SemiBold',
+  },
+  typeOptionsList: {
+    marginTop: 8,
+  },
+  typeOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+  },
+  typeOptionRowText: {
+    fontSize: 16,
+    fontFamily: 'Quicksand_500Medium',
+  },
+  quickSearchContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  quickSearchLabel: {
+    fontSize: 13,
+    fontFamily: 'Quicksand_500Medium',
+    marginBottom: 12,
+  },
+  quickSearchButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  quickSearchButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  quickSearchButtonText: {
+    fontSize: 14,
+    fontFamily: 'Quicksand_600SemiBold',
   },
 });

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "rites": [
+    {
+      "id": "ihram",
+      "order": 1,
+      "title": "Ihram & Intention (Niyyah)",
+      "summary": "Enter the state of ihram and make the intention for Umrah.",
+      "steps": [
+        "Perform ghusl or wudu and wear the two white ihram garments (for men).",
+        "At the miqat, make the intention for Umrah in your heart.",
+        "Begin reciting the Talbiyah."
+      ],
+      "dua": {
+        "arabic": "لَبَّيْكَ اللَّهُمَّ عُمْرَةً",
+        "transliteration": "Labbayka Allāhumma ʿumratan",
+        "translation": "Here I am, O Allah, for Umrah.",
+        "audioAssetKey": "talbiyah"
+      },
+      "estimatedMinutes": 15,
+      "scholarSource": "PLACEHOLDER — pending scholar verification (PRD §14 #1). Ref: Sahih Muslim, Book of Hajj (Kitab al-Hajj)."
+    },
+    {
+      "id": "tawaf",
+      "order": 2,
+      "title": "Tawaf (7 circuits)",
+      "summary": "Circle the Ka'bah seven times, beginning and ending at the Black Stone.",
+      "steps": [
+        "Begin at the Black Stone, facing it; say 'Bismillah, Allahu akbar'.",
+        "Circle the Ka'bah seven times counter-clockwise, keeping it on your left.",
+        "Where possible, men perform raml (a brisk pace) in the first three circuits."
+      ],
+      "dua": {
+        "arabic": "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+        "transliteration": "Rabbanā ātinā fi'd-dunyā ḥasanatan wa fi'l-ākhirati ḥasanatan wa qinā ʿadhāba'n-nār",
+        "translation": "Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
+        "audioAssetKey": "tawaf-dua"
+      },
+      "repeatCount": 7,
+      "estimatedMinutes": 30,
+      "siteId": "masjid-al-haram",
+      "scholarSource": "PLACEHOLDER — pending scholar verification (PRD §14 #1). Ref: Qur'an 2:201; Sahih al-Bukhari, Book of Hajj."
+    }
+  ]
+}

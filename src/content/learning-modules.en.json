@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "id": "what-is-umrah",
+      "title": "What is Umrah?",
+      "body": "Umrah is a visit to the Sacred House (the Ka'bah) that can be performed at any time of year. It consists of entering ihram, performing tawaf around the Ka'bah, walking sa'i between Safa and Marwah, and cutting the hair. Unlike Hajj, it is not tied to specific days.",
+      "scholarSource": "PLACEHOLDER — pending scholar verification."
+    },
+    {
+      "id": "ihram-rules",
+      "title": "Ihram & its rules",
+      "body": "In the state of ihram, certain acts are set aside — such as cutting hair or nails, using scented products, and quarrelling. Enter ihram at the miqat with a sincere intention, and recite the Talbiyah often.",
+      "scholarSource": "PLACEHOLDER — pending scholar verification."
+    }
+  ]
+}
