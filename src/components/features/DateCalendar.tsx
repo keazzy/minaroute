@@ -9,7 +9,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/src/components/ui/Text';
 import { colors, radii, spacing } from '@/src/theme/tokens';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -94,40 +94,47 @@ export function DateCalendar({
   });
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.scrollContent}
-      stickyHeaderIndices={[0]}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* index 0 — sticks to the top while months scroll under it */}
+    <View style={styles.container}>
+      {/* Fixed weekday row (a normal row, not a sticky header) sits above the scroll */}
       <View style={styles.weekRow}>
-        {WEEKDAYS.map((w) => (
-          <Text key={w} variant="caption" color="onSurfaceMuted" style={styles.weekLabel}>
+        {WEEKDAYS.map((w, i) => (
+          <Text key={i} variant="caption" color="onSurfaceMuted" style={styles.weekLabel}>
             {w}
           </Text>
         ))}
       </View>
-      {months.map((m) => (
-        <MonthView
-          key={`${m.year}-${m.month0}`}
-          year={m.year}
-          month0={m.month0}
-          value={value}
-          todayIso={todayIso}
-          onSelect={onChange}
-        />
-      ))}
-    </ScrollView>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {months.map((m) => (
+          <MonthView
+            key={`${m.year}-${m.month0}`}
+            year={m.year}
+            month0={m.month0}
+            value={value}
+            todayIso={todayIso}
+            onSelect={onChange}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const CELL = `${100 / 7}%`;
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: spacing.lg },
-  weekRow: { flexDirection: 'row', width: '100%', backgroundColor: colors.surface, paddingVertical: spacing.sm },
+  weekRow: {
+    flexDirection: 'row',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
   weekLabel: { flex: 1, textAlign: 'center' },
   month: { gap: spacing.sm, marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
