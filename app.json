@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.minaroute",
+      "bundleIdentifier": "com.minaroute.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Minaroute uses your location to find Muslim-friendly places near you, and during Umrah to gently guide you to each rite and the right gate.",
@@ -34,13 +34,8 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
-      "package": "com.anonymous.minaroute",
-      "ndkVersion": "29.0.14206865",
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyBZN0S2homglfFfqCC34_nI19xuT28JKks"
-        }
-      }
+      "package": "com.minaroute.app",
+      "ndkVersion": "29.0.14206865"
     },
     "web": {
       "output": "static",
