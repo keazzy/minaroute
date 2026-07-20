@@ -1,13 +1,19 @@
 /**
  * Everyday shell — the 4-tab bottom nav (Home · Explore · Trips · Review) per
- * docs/product-architecture.md. This layout also carries the entry gate that used to
- * live in app/index.tsx: on first run it routes to onboarding, then location
- * permission, before the shell renders. The pilgrimage takeover (Manasik) launches
- * from the Trips tab in later phases and is a full-screen route outside these tabs.
+ * docs/product-architecture.md.
+ *
+ * Uses expo-router's NATIVE tabs (real UITabBar / native Android tabs) rather than the
+ * JS tab bar, so on iOS 26+ the bar renders with the system **liquid glass** material
+ * automatically, and falls back to standard native tabs on older iOS / Android. We
+ * deliberately DON'T set backgroundColor/blurEffect — that would override the glass;
+ * we only tint the selected item with the brand emerald.
+ *
+ * This layout also carries the entry gate (onboarding → permission) before the shell
+ * renders. The Manasik full-screen takeover launches from Trips in later phases.
  */
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ExpoLocation from 'expo-location';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -53,45 +59,26 @@ export default function TabsLayout() {
   if (gate === 'permission') return <Redirect href="/permission" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceMuted,
-        tabBarStyle: { backgroundColor: colors.surfaceRaised, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: 'Quicksand_500Medium', fontSize: 11 },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: t('tabs.explore'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="trips"
-        options={{
-          title: t('tabs.trips'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="navigate-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="review"
-        options={{
-          title: t('tabs.review'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="star-outline" color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={colors.primary}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="explore">
+        <NativeTabs.Trigger.Icon sf="map.fill" md="map" />
+        <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="trips">
+        <NativeTabs.Trigger.Icon sf="figure.walk" md="directions_walk" />
+        <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="review">
+        <NativeTabs.Trigger.Icon sf="star.fill" md="star" />
+        <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
