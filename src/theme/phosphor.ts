@@ -4,24 +4,24 @@
  * family's `getImageSource`) — a raw react-native-svg element renders blank — so the
  * icons must come from a glyph font, not phosphor-react-native's SVG components.
  *
- * Fonts + codepoints are from `@phosphor-icons/web` (selection.json). Codepoints are
- * shared across weights, so one glyph map drives both the regular (outline) and fill
- * fonts. To add a tab icon: add its name→codepoint here (look it up in
+ * Single (regular/outline) weight: the native bar tints the active tab emerald via
+ * `tintColor`. We intentionally do NOT provide a separate filled selected-icon —
+ * RNScreens requires `icon` and `selectedIcon` to be the same type, and mixing two
+ * fonts trips `"[RNScreens] icon and selectedIcon must be same type."`.
+ *
+ * Fonts + codepoints are from `@phosphor-icons/web` (selection.json). To add/change a
+ * tab icon: add its name→codepoint here (look it up in
  * node_modules/@phosphor-icons/web/src/regular/selection.json).
  */
 import { createIconSet } from '@expo/vector-icons';
 
 const glyphMap = {
   house: 0xe2c2,
-  'map-trifold': 0xe31a,
-  path: 0xe39c,
-  star: 0xe46a,
+  compass: 0xe1c8,
+  'road-horizon': 0xe838,
+  'chat-text': 0xe17a,
 } as const;
 
 export type PhosphorGlyph = keyof typeof glyphMap;
 
-/** Outline weight — used for inactive tabs. */
-export const PhosphorRegular = createIconSet(glyphMap, 'Phosphor', require('@/assets/fonts/Phosphor-Regular.ttf'));
-
-/** Filled weight — used for the active tab. */
-export const PhosphorFill = createIconSet(glyphMap, 'PhosphorFill', require('@/assets/fonts/Phosphor-Fill.ttf'));
+export const Phosphor = createIconSet(glyphMap, 'Phosphor', require('@/assets/fonts/Phosphor-Regular.ttf'));
