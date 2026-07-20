@@ -2,26 +2,53 @@
  * Everyday shell — the 4-tab bottom nav (Home · Explore · Trips · Review) per
  * docs/product-architecture.md.
  *
- * Uses expo-router `Tabs` with a CUSTOM floating glass tab bar (`GlassTabBar`) so we
- * can render Phosphor SVG icons directly with full control (outline→fill, emerald
- * active) over iOS 26 liquid glass — the native UITabBar can't render Phosphor and its
- * async-image icon path trips an RNScreens error. This layout also carries the entry
- * gate (onboarding → permission) before the shell renders.
+ * Native `NativeTabs` (real UITabBar → iOS 26 liquid glass, native Android tabs).
+ * Custom Phosphor icons are supplied as **static PNG image sources** (pre-rendered by
+ * `scripts/gen-tab-icons.mjs`): regular weight = inactive, fill = active. Static images
+ * are synchronous and both resolve to the same icon type, which avoids the RNScreens
+ * "icon and selectedIcon must be same type" error the async VectorIcon path caused.
+ * `renderingMode: 'template'` lets the bar tint them — emerald on the active tab.
+ *
+ * This layout also carries the entry gate (onboarding → permission) before the shell
+ * renders.
  */
 import * as ExpoLocation from 'expo-location';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import * as Storage from '@/constants/storage';
-import { GlassTabBar } from '@/src/components/GlassTabBar';
 import { colors } from '@/src/theme/tokens';
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
 const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 
+// Static PNG icon pairs (inactive outline / active fill). Regenerate via
+// `npm run gen:tab-icons`. require() paths must be static literals for Metro.
+const ICONS = {
+  house: {
+    default: require('@/assets/icons/tabs/house.png'),
+    selected: require('@/assets/icons/tabs/house-fill.png'),
+  },
+  compass: {
+    default: require('@/assets/icons/tabs/compass.png'),
+    selected: require('@/assets/icons/tabs/compass-fill.png'),
+  },
+  road: {
+    default: require('@/assets/icons/tabs/road-horizon.png'),
+    selected: require('@/assets/icons/tabs/road-horizon-fill.png'),
+  },
+  chat: {
+    default: require('@/assets/icons/tabs/chat-text.png'),
+    selected: require('@/assets/icons/tabs/chat-text-fill.png'),
+  },
+};
+
 type Gate = 'loading' | 'onboarding' | 'permission' | 'ok';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   const [gate, setGate] = useState<Gate>('loading');
 
   useEffect(() => {
@@ -54,14 +81,26 @@ export default function TabsLayout() {
   if (gate === 'permission') return <Redirect href="/permission" />;
 
   return (
-    <Tabs
-      tabBar={(props) => <GlassTabBar state={props.state} navigation={props.navigation} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.surface } }}
-    >
-      <Tabs.Screen name="index" />
-      <Tabs.Screen name="explore" />
-      <Tabs.Screen name="trips" />
-      <Tabs.Screen name="review" />
-    </Tabs>
+    <NativeTabs tintColor={colors.primary}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon src={ICONS.house} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="explore">
+        <NativeTabs.Trigger.Icon src={ICONS.compass} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="trips">
+        <NativeTabs.Trigger.Icon src={ICONS.road} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="review">
+        <NativeTabs.Trigger.Icon src={ICONS.chat} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

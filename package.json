@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "validate-content": "tsx src/lib/content/validate.ts",
+    "gen:tab-icons": "node scripts/gen-tab-icons.mjs",
     "import-mosques": "tsx scripts/import-mosques.ts",
     "build:web": "expo export -p web && node scripts/post-build.js",
     "preview:web": "npx serve dist"
@@ -51,7 +52,6 @@
     "leaflet": "^1.9.4",
     "lottie-react-native": "~7.3.8",
     "mingcute_icon": "^2.9.71",
-    "phosphor-react-native": "^3.0.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.10",
@@ -68,6 +68,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@phosphor-icons/core": "^2.1.1",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "~19.2.4",
     "dotenv": "^16.3.1",
     "eslint": "^9.25.0",
