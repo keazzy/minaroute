@@ -59,34 +59,66 @@ export const SiteSchema = z.object({
   gates: z.array(GateSchema).default([]),
 });
 
+export const ChecklistItemSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  note: z.string().optional(),
+});
+
+export const ChecklistSectionSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  items: z.array(ChecklistItemSchema).min(1),
+});
+
 export const RitesFileSchema = z.object({ version: z.number().int().positive(), rites: z.array(RiteSchema).min(1) });
 export const ModulesFileSchema = z.object({ version: z.number().int().positive(), modules: z.array(ModuleSchema) });
 export const SitesFileSchema = z.object({ version: z.number().int().positive(), sites: z.array(SiteSchema) });
+export const ChecklistFileSchema = z.object({
+  version: z.number().int().positive(),
+  sections: z.array(ChecklistSectionSchema).min(1),
+});
 
 export type Dua = z.infer<typeof DuaSchema>;
 export type Rite = z.infer<typeof RiteSchema>;
 export type LearningModule = z.infer<typeof ModuleSchema>;
 export type Gate = z.infer<typeof GateSchema>;
 export type Site = z.infer<typeof SiteSchema>;
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
+export type ChecklistSection = z.infer<typeof ChecklistSectionSchema>;
 export type RitesFile = z.infer<typeof RitesFileSchema>;
 export type ModulesFile = z.infer<typeof ModulesFileSchema>;
 export type SitesFile = z.infer<typeof SitesFileSchema>;
+export type ChecklistFile = z.infer<typeof ChecklistFileSchema>;
 
 // ---- Validation ------------------------------------------------------------
 
 export type ValidationResult = { ok: boolean; errors: string[] };
 
 /** Validate already-parsed content objects. Pure — used by the CLI and by tests. */
-export function validateContent(input: { rites: unknown; modules: unknown; sites: unknown }): ValidationResult {
+export function validateContent(input: {
+  rites: unknown;
+  modules: unknown;
+  sites: unknown;
+  checklist: unknown;
+}): ValidationResult {
   const errors: string[] = [];
 
   const rites = RitesFileSchema.safeParse(input.rites);
   const modules = ModulesFileSchema.safeParse(input.modules);
   const sites = SitesFileSchema.safeParse(input.sites);
+  const checklist = ChecklistFileSchema.safeParse(input.checklist);
 
   if (!rites.success) errors.push(...rites.error.issues.map((i) => `umrah-rites: ${i.path.join('.')} — ${i.message}`));
   if (!modules.success) errors.push(...modules.error.issues.map((i) => `learning-modules: ${i.path.join('.')} — ${i.message}`));
   if (!sites.success) errors.push(...sites.error.issues.map((i) => `sites: ${i.path.join('.')} — ${i.message}`));
+  if (!checklist.success) errors.push(...checklist.error.issues.map((i) => `checklist: ${i.path.join('.')} — ${i.message}`));
+
+  // Checklist item ids must be globally unique (the local store keys progress on item_id).
+  if (checklist.success) {
+    const ids = checklist.data.sections.flatMap((s) => s.items.map((it) => it.id));
+    if (new Set(ids).size !== ids.length) errors.push('checklist: duplicate item `id` values across sections');
+  }
 
   // Cross-checks (only when the individual files parsed).
   if (rites.success) {
@@ -121,12 +153,13 @@ function runCli(): void {
   const dir = path.join(__dirname, '..', '..', 'content');
   const read = (f: string) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
 
-  let input: { rites: unknown; modules: unknown; sites: unknown };
+  let input: { rites: unknown; modules: unknown; sites: unknown; checklist: unknown };
   try {
     input = {
       rites: read('umrah-rites.en.json'),
       modules: read('learning-modules.en.json'),
       sites: read('sites.json'),
+      checklist: read('checklist.en.json'),
     };
   } catch (err) {
     console.error('✗ content validation failed to read files:', (err as Error).message);

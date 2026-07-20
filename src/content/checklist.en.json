@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "sections": [
+    {
+      "id": "documents",
+      "title": "Documents",
+      "items": [
+        { "id": "doc-passport", "label": "Passport (valid 6+ months)" },
+        { "id": "doc-visa", "label": "Umrah visa" },
+        { "id": "doc-tickets", "label": "Flight tickets / itinerary" },
+        { "id": "doc-hotel", "label": "Hotel booking confirmation" },
+        { "id": "doc-vaccination", "label": "Vaccination certificate (if required)" },
+        { "id": "doc-id-copies", "label": "Photocopies of passport & ID" }
+      ]
+    },
+    {
+      "id": "ihram",
+      "title": "Ihram & clothing",
+      "items": [
+        { "id": "ihram-garments", "label": "Two white ihram garments (men)", "note": "Unstitched, seamless" },
+        { "id": "ihram-belt", "label": "Ihram belt / money belt" },
+        { "id": "ihram-modest", "label": "Modest, comfortable clothing (women)" },
+        { "id": "ihram-sandals", "label": "Simple sandals (no covering the ankle bone, men)" },
+        { "id": "ihram-underlayers", "label": "Extra prayer clothes & underlayers" }
+      ]
+    },
+    {
+      "id": "health",
+      "title": "Health & care",
+      "items": [
+        { "id": "health-meds", "label": "Personal medication + prescriptions" },
+        { "id": "health-firstaid", "label": "Small first-aid kit (plasters, pain relief)" },
+        { "id": "health-unscented", "label": "Unscented soap & toiletries", "note": "Scented products are avoided in ihram" },
+        { "id": "health-mask", "label": "Face masks" },
+        { "id": "health-sunscreen", "label": "Sunscreen (unscented)" }
+      ]
+    },
+    {
+      "id": "essentials",
+      "title": "Everyday essentials",
+      "items": [
+        { "id": "ess-phone-charger", "label": "Phone, charger & power bank" },
+        { "id": "ess-adapter", "label": "Travel plug adapter (Saudi Type G)" },
+        { "id": "ess-cash", "label": "Some cash (Saudi Riyal)" },
+        { "id": "ess-water-bottle", "label": "Refillable water bottle" },
+        { "id": "ess-bag", "label": "Small day bag / drawstring bag for shoes" },
+        { "id": "ess-prayer-mat", "label": "Lightweight prayer mat" }
+      ]
+    }
+  ]
+}
