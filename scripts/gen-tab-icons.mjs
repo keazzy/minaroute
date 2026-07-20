@@ -17,7 +17,7 @@ const WEIGHTS = [
   { dir: 'regular', srcSuffix: '', outSuffix: '' },
   { dir: 'fill', srcSuffix: '-fill', outSuffix: '-fill' },
 ];
-const BASE_PT = 28;
+const BASE_PT = 24;
 const SCALES = [1, 2, 3];
 const CORE = 'node_modules/@phosphor-icons/core/assets';
 const OUT = 'assets/icons/tabs';
