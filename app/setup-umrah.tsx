@@ -5,6 +5,7 @@
  * local store, and returns to the hub where the countdown appears. Dates are optional —
  * "I'll add dates later" still sets up generic prep (FR-001, US-001 edge case).
  */
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -40,14 +41,19 @@ export default function SetupUmrahScreen() {
           Sets your countdown and prep plan. You can change or add this anytime.
         </Text>
 
-        {/* Trip type — segmented toggle (only Umrah active) */}
-        <View style={styles.segment}>
-          <View style={[styles.seg, styles.segActive]}>
+        {/* Trip type — tiles with icons (only Umrah active) */}
+        <View style={styles.tileRow}>
+          <View style={[styles.tile, styles.tileActive]}>
+            <MaterialCommunityIcons name="mosque" size={26} color={colors.onPrimary} />
             <Text variant="bodyStrong" style={{ color: colors.onPrimary }}>
               Umrah
             </Text>
+            <Text variant="caption" style={{ color: colors.primarySoft }}>
+              Saudi Arabia
+            </Text>
           </View>
-          <View style={[styles.seg, styles.segDisabled]}>
+          <View style={[styles.tile, styles.tileDisabled]}>
+            <MaterialCommunityIcons name="tent" size={26} color={colors.onSurfaceMuted} />
             <Text variant="bodyStrong" color="onSurfaceMuted">
               Hajj
             </Text>
@@ -89,20 +95,22 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.surface },
   top: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   calWrap: { flex: 1, paddingHorizontal: spacing.lg },
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceSunken,
-    borderRadius: radii.pill,
-    padding: 4,
-    marginTop: spacing.md,
-    gap: 4,
+  tileRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  tile: {
+    flex: 1,
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    padding: spacing.md,
+    minHeight: 104,
   },
-  seg: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: radii.pill, minHeight: 48 },
-  segActive: { backgroundColor: colors.primary },
-  segDisabled: { opacity: 0.7 },
+  tileActive: { backgroundColor: colors.primary, borderColor: colors.primaryDark },
+  tileDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.border },
   footer: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     gap: spacing.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,

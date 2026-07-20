@@ -127,8 +127,8 @@ const CELL = `${100 / 7}%`;
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: spacing.lg },
-  weekRow: { flexDirection: 'row', backgroundColor: colors.surface, paddingVertical: spacing.sm },
-  weekLabel: { width: CELL, textAlign: 'center' },
+  weekRow: { flexDirection: 'row', width: '100%', backgroundColor: colors.surface, paddingVertical: spacing.sm },
+  weekLabel: { flex: 1, textAlign: 'center' },
   month: { gap: spacing.sm, marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: CELL, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 2 },
