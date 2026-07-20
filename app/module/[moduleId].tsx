@@ -17,7 +17,7 @@ export default function ModuleReaderScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <Stack.Screen options={{ title: mod?.title ?? 'Learning', headerBackTitle: 'Back' }} />
+      <Stack.Screen options={{ title: mod?.title ?? 'Learning', headerBackButtonDisplayMode: 'minimal' }} />
       <ScrollView contentContainerStyle={styles.content}>
         {mod ? (
           <>

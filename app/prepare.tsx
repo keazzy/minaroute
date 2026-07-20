@@ -42,7 +42,7 @@ export default function PrepareScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <Stack.Screen options={{ title: 'Prepare', headerBackTitle: 'Trips' }} />
+      <Stack.Screen options={{ title: 'Prepare', headerBackButtonDisplayMode: 'minimal' }} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text variant="body" color="onSurfaceMuted">
           Tick things off as you go — it all saves, even offline.

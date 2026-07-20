@@ -51,7 +51,7 @@ export default function SetupUmrahScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <Stack.Screen options={{ title: 'Set up your Umrah', headerBackTitle: 'Trips' }} />
+      <Stack.Screen options={{ title: 'Set up your Umrah', headerBackButtonDisplayMode: 'minimal' }} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text variant="body" color="onSurfaceMuted">
           Sets your countdown and prep plan. You can change or add this anytime.

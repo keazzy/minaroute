@@ -76,6 +76,8 @@ A shared running log between the **build agent** (Claude Code, in the repo) and 
   - **Verified**: content validates; iOS bundle clean (HTTP 200); typecheck at the 15 pre-existing baseline (no new errors); typed routes regenerated. **TASK-020** (personalized day-by-day itinerary, P2) **deferred**; **TASK-021** (airplane-mode e2e) pending a **device pass** (EAS dev build) — can't drive a device headlessly.
   - **Deviations**: date capture uses `@react-native-picker/picker` (already installed — avoided a new dep so as not to conflict with the running "remove react-native-maps" background task); prep reached as pushed routes (`/setup-umrah`, `/prepare`, `/module/[id]`) rather than a tab. Did **not** touch `app/(tabs)/_layout.tsx` or `package.json` (both being edited by the two spawned background tasks).
 
+- **2026-07-20 — UI: white app background + icon-only back buttons (founder request).** Changed the `surface` token `#FAF7F1` → **`#FFFFFF`** (propagates app-wide via `colors.surface`; updated `design.md` YAML too). Deliberately kept `surface-sunken` (sand `#F2EDE3`) and `accent-soft` chips so the app reads clean-white *with* warmth rather than clinical — note this softens `design.md`'s original "avoid pure white sterility" stance (founder's call). Set `headerBackButtonDisplayMode: 'minimal'` on the pushed screens (setup-umrah / prepare / module) so the native back button is chevron-only (no "Trips"/"Back" label). Typecheck + iOS bundle clean.
+
 ## Decisions & deviations
 
 - **Config lives in `app.json`, not `app.config.ts`.** The roadmap/PRD reference `app.config.ts`; the real repo has always used `app.json`. Kept `app.json` (do-not-re-scaffold). TASK-002 edits applied there.
