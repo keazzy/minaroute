@@ -6,7 +6,7 @@ import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
 import { CATEGORIES, Category, Location } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
 import { Colors } from '@/constants/theme';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import LottieView from 'lottie-react-native';

@@ -1,13 +1,20 @@
 /**
  * Everyday shell — the 4-tab bottom nav (Home · Explore · Trips · Review) per
- * docs/product-architecture.md. This layout also carries the entry gate that used to
- * live in app/index.tsx: on first run it routes to onboarding, then location
- * permission, before the shell renders. The pilgrimage takeover (Manasik) launches
- * from the Trips tab in later phases and is a full-screen route outside these tabs.
+ * docs/product-architecture.md.
+ *
+ * Native `NativeTabs` (real UITabBar → iOS 26 liquid glass, native Android tabs).
+ * Custom Phosphor icons are supplied as **static PNG image sources** (pre-rendered by
+ * `scripts/gen-tab-icons.mjs`): regular weight = inactive, fill = active. Static images
+ * are synchronous and both resolve to the same icon type, which avoids the RNScreens
+ * "icon and selectedIcon must be same type" error the async VectorIcon path caused.
+ * `renderingMode: 'template'` lets the bar tint them — emerald on the active tab.
+ *
+ * This layout also carries the entry gate (onboarding → permission) before the shell
+ * renders.
  */
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ExpoLocation from 'expo-location';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +23,27 @@ import { colors } from '@/src/theme/tokens';
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
 const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
+
+// Static PNG icon pairs (inactive outline / active fill). Regenerate via
+// `npm run gen:tab-icons`. require() paths must be static literals for Metro.
+const ICONS = {
+  house: {
+    default: require('@/assets/icons/tabs/house-line.png'),
+    selected: require('@/assets/icons/tabs/house-line-fill.png'),
+  },
+  compass: {
+    default: require('@/assets/icons/tabs/compass.png'),
+    selected: require('@/assets/icons/tabs/compass-fill.png'),
+  },
+  road: {
+    default: require('@/assets/icons/tabs/road-horizon.png'),
+    selected: require('@/assets/icons/tabs/road-horizon-fill.png'),
+  },
+  chat: {
+    default: require('@/assets/icons/tabs/chat-centered-text.png'),
+    selected: require('@/assets/icons/tabs/chat-centered-text-fill.png'),
+  },
+};
 
 type Gate = 'loading' | 'onboarding' | 'permission' | 'ok';
 
@@ -53,45 +81,26 @@ export default function TabsLayout() {
   if (gate === 'permission') return <Redirect href="/permission" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceMuted,
-        tabBarStyle: { backgroundColor: colors.surfaceRaised, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: 'Quicksand_500Medium', fontSize: 11 },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: t('tabs.explore'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="map-outline" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="trips"
-        options={{
-          title: t('tabs.trips'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="navigate-outline" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="review"
-        options={{
-          title: t('tabs.review'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="star-outline" color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+    <NativeTabs tintColor={colors.primary}>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon src={ICONS.house} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="explore">
+        <NativeTabs.Trigger.Icon src={ICONS.compass} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="trips">
+        <NativeTabs.Trigger.Icon src={ICONS.road} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="review">
+        <NativeTabs.Trigger.Icon src={ICONS.chat} renderingMode="template" />
+        <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
