@@ -7,6 +7,7 @@
  * Populated → countdown (or an add-dates prompt) + the single next step + prep entry.
  * The full-screen guided takeover (on-the-ground rites) launches from here in later phases.
  */
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -38,6 +39,9 @@ export default function TripsTab() {
   if (!itinerary) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
+        <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={10} style={styles.emptyGear}>
+          <Ionicons name="settings-outline" size={24} color={colors.onSurfaceMuted} />
+        </Pressable>
         <View style={styles.emptyWrap}>
           <View style={styles.emptyArt}>
             <Text variant="display" style={{ color: colors.primary }}>
@@ -61,7 +65,12 @@ export default function TripsTab() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text variant="h1">Trips</Text>
+        <View style={styles.headerRow}>
+          <Text variant="h1">Trips</Text>
+          <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" hitSlop={10}>
+            <Ionicons name="settings-outline" size={24} color={colors.onSurfaceMuted} />
+          </Pressable>
+        </View>
 
         {target ? (
           <Countdown targetDate={target} />
@@ -103,6 +112,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.surface },
   center: { alignItems: 'center', justifyContent: 'center' },
   content: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  emptyGear: { position: 'absolute', top: spacing.sm, right: spacing.lg, zIndex: 1, padding: spacing.xs },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, gap: spacing.md },
   emptyArt: {
     width: 96,
