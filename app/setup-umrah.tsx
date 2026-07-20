@@ -94,7 +94,7 @@ export default function SetupUmrahScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.surface },
   top: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
-  calWrap: { flex: 1, paddingHorizontal: spacing.lg },
+  calWrap: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   tileRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   tile: {
     flex: 1,
