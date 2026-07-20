@@ -51,6 +51,7 @@
     "leaflet": "^1.9.4",
     "lottie-react-native": "~7.3.8",
     "mingcute_icon": "^2.9.71",
+    "phosphor-react-native": "^3.0.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.10",

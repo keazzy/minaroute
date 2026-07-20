@@ -14,11 +14,27 @@
 import * as ExpoLocation from 'expo-location';
 import { Redirect } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { House, type Icon, MapTrifold, PathIcon, Star } from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as Storage from '@/constants/storage';
 import { colors } from '@/src/theme/tokens';
+
+const ICON_SIZE = 26;
+
+/**
+ * Build the `{ default, selected }` icon pair for a tab from a Phosphor icon:
+ * a regular-weight outline when inactive, a fill-weight emerald when active.
+ * Native tabs accept a React element for `src`, so the Phosphor SVG renders on the
+ * native (liquid-glass, iOS 26+) tab bar. Swap any icon by changing the component below.
+ */
+function tabIcon(IconCmp: Icon) {
+  return {
+    default: <IconCmp size={ICON_SIZE} color={colors.onSurfaceMuted} weight="regular" />,
+    selected: <IconCmp size={ICON_SIZE} color={colors.primary} weight="fill" />,
+  };
+}
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
 const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
@@ -61,22 +77,22 @@ export default function TabsLayout() {
   return (
     <NativeTabs tintColor={colors.primary}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
+        <NativeTabs.Trigger.Icon src={tabIcon(House)} />
         <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Icon sf="map.fill" md="map" />
+        <NativeTabs.Trigger.Icon src={tabIcon(MapTrifold)} />
         <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="trips">
-        <NativeTabs.Trigger.Icon sf="figure.walk" md="directions_walk" />
+        <NativeTabs.Trigger.Icon src={tabIcon(PathIcon)} />
         <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="review">
-        <NativeTabs.Trigger.Icon sf="star.fill" md="star" />
+        <NativeTabs.Trigger.Icon src={tabIcon(Star)} />
         <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
