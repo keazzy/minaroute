@@ -11,7 +11,7 @@ colors:
   accent-dark: "#8A6A2E"
   accent-soft: "#F5ECD9"
   on-accent: "#3A2E17"
-  surface: "#FAF7F1"
+  surface: "#FFFFFF"
   surface-raised: "#FFFFFF"
   surface-sunken: "#F2EDE3"
   on-surface: "#1B2A25"

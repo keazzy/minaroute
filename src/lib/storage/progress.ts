@@ -6,7 +6,13 @@
  * Types are declared locally (not imported from the supabase queries module) so the
  * offline path never pulls the network client into its bundle.
  */
-import { getDb, nowIso } from './localStore';
+import { clearLocalStore, getDb, nowIso } from './localStore';
+
+/** Wipe the local pilgrimage state (itinerary + checklist + rite progress) — used by
+ *  the dev "reset trip" control to replay the setup flow from the empty state. */
+export async function resetLocalPilgrimage(): Promise<void> {
+  await clearLocalStore();
+}
 
 export type RiteStatus = 'not_started' | 'in_progress' | 'completed';
 export type PilgrimageType = 'umrah' | 'hajj';

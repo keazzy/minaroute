@@ -22,7 +22,7 @@ export const colors = {
   accentDark: '#8A6A2E',
   accentSoft: '#F5ECD9',
   onAccent: '#3A2E17',
-  surface: '#FAF7F1',
+  surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
   surfaceSunken: '#F2EDE3',
   onSurface: '#1B2A25',
