@@ -12,7 +12,7 @@ import { Resvg } from '@resvg/resvg-js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ICONS = ['house', 'compass', 'road-horizon', 'chat-text'];
+const ICONS = ['house-line', 'compass', 'road-horizon', 'chat-centered-text'];
 const WEIGHTS = [
   { dir: 'regular', srcSuffix: '', outSuffix: '' },
   { dir: 'fill', srcSuffix: '-fill', outSuffix: '-fill' },

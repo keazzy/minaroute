@@ -28,8 +28,8 @@ const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 // `npm run gen:tab-icons`. require() paths must be static literals for Metro.
 const ICONS = {
   house: {
-    default: require('@/assets/icons/tabs/house.png'),
-    selected: require('@/assets/icons/tabs/house-fill.png'),
+    default: require('@/assets/icons/tabs/house-line.png'),
+    selected: require('@/assets/icons/tabs/house-line-fill.png'),
   },
   compass: {
     default: require('@/assets/icons/tabs/compass.png'),
@@ -40,8 +40,8 @@ const ICONS = {
     selected: require('@/assets/icons/tabs/road-horizon-fill.png'),
   },
   chat: {
-    default: require('@/assets/icons/tabs/chat-text.png'),
-    selected: require('@/assets/icons/tabs/chat-text-fill.png'),
+    default: require('@/assets/icons/tabs/chat-centered-text.png'),
+    selected: require('@/assets/icons/tabs/chat-centered-text-fill.png'),
   },
 };
 
