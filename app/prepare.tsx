@@ -30,14 +30,17 @@ export default function PrepareScreen() {
     void load();
   }, [load]);
 
-  const toggle = useCallback(async (itemId: string) => {
-    // Optimistic flip, then persist.
+  const toggle = useCallback((itemId: string) => {
     setChecked((prev) => {
+      const willCheck = !prev.has(itemId);
       const next = new Set(prev);
-      next.has(itemId) ? next.delete(itemId) : next.add(itemId);
+      if (willCheck) next.add(itemId);
+      else next.delete(itemId);
+      // Persist the EXPLICIT target value (not a store-side flip) so rapid taps stay
+      // idempotent and can't desync the UI from the store (last-write-wins).
+      void toggleChecklistItem(itemId, willCheck);
       return next;
     });
-    await toggleChecklistItem(itemId);
   }, []);
 
   return (

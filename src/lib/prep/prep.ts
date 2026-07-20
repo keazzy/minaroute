@@ -77,10 +77,18 @@ export function usePrepState(): PrepState {
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    const [it, checklist] = await Promise.all([getItinerary(), getChecklist()]);
-    setItinerary(it);
-    setCheckedIds(new Set(checklist.filter((c) => c.checked).map((c) => c.item_id)));
-    setLoading(false);
+    try {
+      const [it, checklist] = await Promise.all([getItinerary(), getChecklist()]);
+      setItinerary(it);
+      setCheckedIds(new Set(checklist.filter((c) => c.checked).map((c) => c.item_id)));
+    } catch {
+      // Local store unavailable (e.g. web without SQLite) — degrade to empty state
+      // rather than leaving the hub stuck on the loading spinner.
+      setItinerary(null);
+      setCheckedIds(new Set());
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
