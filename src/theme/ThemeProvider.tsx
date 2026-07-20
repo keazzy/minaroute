@@ -45,6 +45,9 @@ export function useAppFonts(): boolean {
     Quicksand_700Bold,
     Amiri_400Regular,
     Amiri_700Bold,
+    // Phosphor icon fonts (outline + fill) for the native tab bar VectorIcons.
+    Phosphor: require('@/assets/fonts/Phosphor-Regular.ttf'),
+    PhosphorFill: require('@/assets/fonts/Phosphor-Fill.ttf'),
     // --- Satoshi alternate (add TTFs to assets/fonts/, then uncomment) ---
     // 'Satoshi-Regular': require('@/assets/fonts/Satoshi-Regular.otf'),
     // 'Satoshi-Medium': require('@/assets/fonts/Satoshi-Medium.otf'),

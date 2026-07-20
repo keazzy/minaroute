@@ -14,25 +14,24 @@
 import * as ExpoLocation from 'expo-location';
 import { Redirect } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { House, type Icon, MapTrifold, PathIcon, Star } from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as Storage from '@/constants/storage';
+import { PhosphorFill, PhosphorRegular, type PhosphorGlyph } from '@/src/theme/phosphor';
 import { colors } from '@/src/theme/tokens';
 
-const ICON_SIZE = 26;
-
 /**
- * Build the `{ default, selected }` icon pair for a tab from a Phosphor icon:
- * a regular-weight outline when inactive, a fill-weight emerald when active.
- * Native tabs accept a React element for `src`, so the Phosphor SVG renders on the
- * native (liquid-glass, iOS 26+) tab bar. Swap any icon by changing the component below.
+ * Build the `{ default, selected }` icon pair for a tab from a Phosphor glyph name.
+ * NativeTabs only rasterizes `VectorIcon` elements onto the native (liquid-glass,
+ * iOS 26+) bar, so we render Phosphor from its glyph FONT: outline (regular) when
+ * inactive, filled when active. The bar tints them (emerald when selected via
+ * `tintColor`). Swap any icon by changing the glyph name in the triggers below.
  */
-function tabIcon(IconCmp: Icon) {
+function tabIcon(name: PhosphorGlyph) {
   return {
-    default: <IconCmp size={ICON_SIZE} color={colors.onSurfaceMuted} weight="regular" />,
-    selected: <IconCmp size={ICON_SIZE} color={colors.primary} weight="fill" />,
+    default: <NativeTabs.Trigger.VectorIcon family={PhosphorRegular} name={name} />,
+    selected: <NativeTabs.Trigger.VectorIcon family={PhosphorFill} name={name} />,
   };
 }
 
@@ -77,22 +76,22 @@ export default function TabsLayout() {
   return (
     <NativeTabs tintColor={colors.primary}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon src={tabIcon(House)} />
+        <NativeTabs.Trigger.Icon src={tabIcon('house')} />
         <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Icon src={tabIcon(MapTrifold)} />
+        <NativeTabs.Trigger.Icon src={tabIcon('map-trifold')} />
         <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="trips">
-        <NativeTabs.Trigger.Icon src={tabIcon(PathIcon)} />
+        <NativeTabs.Trigger.Icon src={tabIcon('path')} />
         <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="review">
-        <NativeTabs.Trigger.Icon src={tabIcon(Star)} />
+        <NativeTabs.Trigger.Icon src={tabIcon('star')} />
         <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
