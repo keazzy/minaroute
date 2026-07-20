@@ -2,34 +2,19 @@
  * Everyday shell — the 4-tab bottom nav (Home · Explore · Trips · Review) per
  * docs/product-architecture.md.
  *
- * Uses expo-router's NATIVE tabs (real UITabBar / native Android tabs) rather than the
- * JS tab bar, so on iOS 26+ the bar renders with the system **liquid glass** material
- * automatically, and falls back to standard native tabs on older iOS / Android. We
- * deliberately DON'T set backgroundColor/blurEffect — that would override the glass;
- * we only tint the selected item with the brand emerald.
- *
- * This layout also carries the entry gate (onboarding → permission) before the shell
- * renders. The Manasik full-screen takeover launches from Trips in later phases.
+ * Uses expo-router `Tabs` with a CUSTOM floating glass tab bar (`GlassTabBar`) so we
+ * can render Phosphor SVG icons directly with full control (outline→fill, emerald
+ * active) over iOS 26 liquid glass — the native UITabBar can't render Phosphor and its
+ * async-image icon path trips an RNScreens error. This layout also carries the entry
+ * gate (onboarding → permission) before the shell renders.
  */
 import * as ExpoLocation from 'expo-location';
-import { Redirect } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Redirect, Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import * as Storage from '@/constants/storage';
-import { Phosphor, type PhosphorGlyph } from '@/src/theme/phosphor';
+import { GlassTabBar } from '@/src/components/GlassTabBar';
 import { colors } from '@/src/theme/tokens';
-
-/**
- * Render a Phosphor glyph as a native-tab icon. NativeTabs only rasterizes
- * `VectorIcon` elements onto the native (liquid-glass, iOS 26+) bar, so Phosphor comes
- * from its glyph FONT. One weight (outline); the bar tints the active tab emerald via
- * `tintColor`. Swap any icon by changing the glyph name in the triggers below.
- */
-function tabIcon(name: PhosphorGlyph) {
-  return <NativeTabs.Trigger.VectorIcon family={Phosphor} name={name} />;
-}
 
 const ONBOARDING_SEEN_KEY = 'onboarding_seen_v2';
 const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
@@ -37,7 +22,6 @@ const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 type Gate = 'loading' | 'onboarding' | 'permission' | 'ok';
 
 export default function TabsLayout() {
-  const { t } = useTranslation();
   const [gate, setGate] = useState<Gate>('loading');
 
   useEffect(() => {
@@ -70,26 +54,14 @@ export default function TabsLayout() {
   if (gate === 'permission') return <Redirect href="/permission" />;
 
   return (
-    <NativeTabs tintColor={colors.primary}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon src={tabIcon('house')} />
-        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Icon src={tabIcon('compass')} />
-        <NativeTabs.Trigger.Label>{t('tabs.explore')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="trips">
-        <NativeTabs.Trigger.Icon src={tabIcon('road-horizon')} />
-        <NativeTabs.Trigger.Label>{t('tabs.trips')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="review">
-        <NativeTabs.Trigger.Icon src={tabIcon('chat-text')} />
-        <NativeTabs.Trigger.Label>{t('tabs.review')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs
+      tabBar={(props) => <GlassTabBar state={props.state} navigation={props.navigation} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.surface } }}
+    >
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="explore" />
+      <Tabs.Screen name="trips" />
+      <Tabs.Screen name="review" />
+    </Tabs>
   );
 }
