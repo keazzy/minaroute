@@ -12,8 +12,8 @@ A shared running log between the **build agent** (Claude Code, in the repo) and 
 ## Status snapshot
 
 - **Product:** Minaroute (everyday shell) + Manasik (pilgrimage mode)
-- **Current phase:** Phase 0 complete → Phase 1 next (Prepare-at-Home)
-- **Tasks complete:** 12/58 (Phase 0 done)
+- **Current phase:** Phase 1 merged (Prepare-at-Home) → Phase 2 next (Umrah rite guidance)
+- **Tasks complete:** 19/59 (Phase 0 + Phase 1; TASK-020 deferred, TASK-021 verified on-device)
 - **Stack (locked):** Expo + Expo Router · Supabase (Postgres/PostGIS) + Supabase Auth (anonymous-first, RLS) · expo-maps (discovery) + bundled static Haram map (pilgrimage) · Quicksand default font (Satoshi swappable) + Amiri (Arabic) · rite content bundled on-device for offline.
 
 ## Log
@@ -79,6 +79,8 @@ A shared running log between the **build agent** (Claude Code, in the repo) and 
 - **2026-07-20 — UI: white app background + icon-only back buttons (founder request).** Changed the `surface` token `#FAF7F1` → **`#FFFFFF`** (propagates app-wide via `colors.surface`; updated `design.md` YAML too). Deliberately kept `surface-sunken` (sand `#F2EDE3`) and `accent-soft` chips so the app reads clean-white *with* warmth rather than clinical — note this softens `design.md`'s original "avoid pure white sterility" stance (founder's call). Set `headerBackButtonDisplayMode: 'minimal'` on the pushed screens (setup-umrah / prepare / module) so the native back button is chevron-only (no "Trips"/"Back" label). Typecheck + iOS bundle clean.
 
 - **2026-07-20 — Phase 1 local review + Vercel/web build fix.** Ran `/code-review high` on `main..phase-1/prepare-at-home` (2 finder agents). **One real bug**, fixed: `app/prepare.tsx` checklist toggle race — the optimistic UI flip + `toggleChecklistItem(itemId)` (a store-side read-modify-write) could desync on a rapid double-tap. Now computes the target value in the state updater and persists it **explicitly** (`toggleChecklistItem(itemId, willCheck)`) → idempotent, last-write-wins. Cross-file/cleanup pass: clean (validator caller passes `checklist`, ids unique, module ids exist, `@react-native-picker/picker` still used by `search-results.ios.tsx`). **Vercel error reproduced + fixed:** `expo export -p web` failed with `Unable to resolve module ./wa-sqlite/wa-sqlite.wasm` (expo-sqlite's web worker, pulled into the web graph once Phase 1 wired the storage layer into the Trips tab). Added `metro.config.js` that pushes `wasm` to `resolver.assetExts` → web export now succeeds (`dist/` built, all routes). Also hardened `usePrepState.reload` with a try/catch so the hub degrades to the empty state instead of hanging if the local store is unavailable (e.g. web without SQLite). Native iOS bundle + Phase-1 typecheck clean. **Runtime caveat:** expo-sqlite on web may still need COOP/COEP headers for the wasm worker at runtime — the build (deploy blocker) is fixed; runtime web-SQLite persistence is secondary (pilgrimage is native-first) and now fails soft.
+
+- **2026-07-20 — Vercel web deploy: buildCommand + COOP/COEP decision.** Changed `vercel.json` `buildCommand` `npx expo export -p web` → **`npm run build:web`** so the deploy also runs `scripts/post-build.js` (copies `manifest.json`/`sw.js`/PWA icons into `dist/` + injects PWA meta tags). Verified end-to-end: `npm run build:web` exits 0, `dist/` has index.html + manifest + sw.js + manifest link. **Decided AGAINST adding COOP/COEP headers** (which would enable expo-sqlite's web wasm worker at runtime): `Cross-Origin-Embedder-Policy: require-corp` blocks cross-origin subresources without CORP — and the web discovery map loads **Leaflet CSS from unpkg** + **OpenStreetMap tiles** cross-origin, so it would break the primary web feature. The pilgrimage store on web fails soft instead (native-first; `usePrepState` degrades to empty). Net: web build is fixed and the PWA is complete; web-SQLite persistence is intentionally not enabled.
 
 ## Decisions & deviations
 
