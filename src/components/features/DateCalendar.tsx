@@ -4,7 +4,7 @@
  * Past days are disabled. Fully custom (no calendar dep) and on the design system.
  */
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/src/components/ui/Text';
 import { colors, radii, spacing } from '@/src/theme/tokens';
@@ -94,7 +94,13 @@ export function DateCalendar({
   });
 
   return (
-    <View style={{ gap: spacing.md }}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      stickyHeaderIndices={[0]}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* index 0 — sticks to the top while months scroll under it */}
       <View style={styles.weekRow}>
         {WEEKDAYS.map((w) => (
           <Text key={w} variant="caption" color="onSurfaceMuted" style={styles.weekLabel}>
@@ -112,16 +118,18 @@ export function DateCalendar({
           onSelect={onChange}
         />
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const CELL = `${100 / 7}%`;
 
 const styles = StyleSheet.create({
-  weekRow: { flexDirection: 'row' },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: spacing.lg },
+  weekRow: { flexDirection: 'row', backgroundColor: colors.surface, paddingVertical: spacing.sm },
   weekLabel: { width: CELL, textAlign: 'center' },
-  month: { gap: spacing.sm },
+  month: { gap: spacing.sm, marginTop: spacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: CELL, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 2 },
   dayInner: {

@@ -7,7 +7,7 @@
  */
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DateCalendar } from '@/src/components/features/DateCalendar';
@@ -34,7 +34,8 @@ export default function SetupUmrahScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <Stack.Screen options={{ title: 'Set up your Umrah', headerBackButtonDisplayMode: 'minimal' }} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Fixed top */}
+      <View style={styles.top}>
         <Text variant="body" color="onSurfaceMuted">
           Sets your countdown and prep plan. You can change or add this anytime.
         </Text>
@@ -59,12 +60,15 @@ export default function SetupUmrahScreen() {
         <Text variant="h3" style={{ marginTop: spacing.lg }}>
           When are you going?
         </Text>
-        <Text variant="caption" color="onSurfaceMuted" style={{ marginBottom: spacing.sm }}>
+        <Text variant="caption" color="onSurfaceMuted">
           Pick a day — a rough date is fine, you can refine it later.
         </Text>
+      </View>
 
+      {/* Calendar fills the middle and scrolls internally under the sticky weekdays */}
+      <View style={styles.calWrap}>
         <DateCalendar value={selected} onChange={setSelected} monthsAhead={9} />
-      </ScrollView>
+      </View>
 
       {/* Sticky footer actions */}
       <View style={styles.footer}>
@@ -83,7 +87,8 @@ export default function SetupUmrahScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.surface },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  top: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
+  calWrap: { flex: 1, paddingHorizontal: spacing.lg },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.surfaceSunken,
