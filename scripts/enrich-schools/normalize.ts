@@ -53,6 +53,20 @@ function cleanPhone(phone: string | null): string | null {
   return digits.length >= 7 ? phone.trim() : null;
 }
 
+/**
+ * Areas match when they share any distinctive token — agents write the same
+ * place as "Aboru, Iyana-Ipaja (Alimosho)" or "Iyana Ipaja (Alimosho)".
+ * Unknown areas don't block a merge.
+ */
+function sameArea(a: string | null, b: string | null): boolean {
+  if (!a || !b) return true;
+  const tokens = (s: string) =>
+    new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2));
+  const ta = tokens(a);
+  for (const t of tokens(b)) if (ta.has(t)) return true;
+  return false;
+}
+
 function mergeInto(target: Candidate, extra: Candidate): void {
   // Fill nulls from the duplicate; keep the higher-confidence primary record.
   const fields: (keyof Candidate)[] = [
@@ -132,7 +146,7 @@ function main() {
       const existing = candidates.find(
         (c) =>
           nameSimilarity(c.name, candidate.name) >= SAME_NAME_THRESHOLD &&
-          (!c.area || !candidate.area || c.area.toLowerCase() === candidate.area.toLowerCase()),
+          sameArea(c.area, candidate.area),
       );
       if (existing) {
         mergeInto(existing, candidate);
