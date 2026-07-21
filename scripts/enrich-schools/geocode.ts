@@ -18,7 +18,8 @@
  *
  * Usage:
  *   npm run schools:geocode
- *   npm run schools:geocode -- --retry   # also redo approx/failed rows
+ *   npm run schools:geocode -- --retry          # redo approx + failed rows
+ *   npm run schools:geocode -- --retry-failed   # redo failed rows only
  */
 
 import {
@@ -44,6 +45,20 @@ interface Hit {
 
 const denied = new Set<string>();
 let lastNominatim = 0;
+
+/**
+ * Discovery agents write compound areas like "Agungi, Lekki (Eti-Osa)" or
+ * "Awoyaya (Ajah/Ibeju-Lekki axis)". Geocoders miss on those verbatim —
+ * split into clean tokens ("Agungi", "Lekki", "Eti-Osa") to try in order.
+ */
+function areaTokens(area: string): string[] {
+  const lifted = area.replace(/\(([^)]*)\)/g, ', $1');
+  const tokens = lifted
+    .split(/[,/]/)
+    .map((t) => t.trim().replace(/\s+(axis|area|environs)$/i, ''))
+    .filter((t) => t.length > 2);
+  return [...new Set(tokens)].slice(0, 3);
+}
 
 function inLagos(lat: number, lng: number): boolean {
   return lat >= BOUNDS.minLat && lat <= BOUNDS.maxLat && lng >= BOUNDS.minLng && lng <= BOUNDS.maxLng;
@@ -153,12 +168,13 @@ async function tryProviders(query: string, key: string, fromAddress: boolean): P
 async function main() {
   requireFile(CANDIDATES_JSON, 'Run schools:normalize first.');
   const retry = process.argv.includes('--retry');
+  const retryFailed = process.argv.includes('--retry-failed');
   const key = getGoogleKey();
   const candidates = readJson<Candidate[]>(CANDIDATES_JSON);
 
-  if (retry) {
+  if (retry || retryFailed) {
     for (const c of candidates) {
-      if (c.geocode_status === 'approx' || c.geocode_status === 'failed') {
+      if ((retry && c.geocode_status === 'approx') || c.geocode_status === 'failed') {
         c.geocode_status = 'pending';
         c.lat = null;
         c.lng = null;
@@ -178,17 +194,29 @@ async function main() {
     }
 
     try {
-      const queries: { q: string; fromAddress: boolean }[] = [];
-      if (c.address) queries.push({ q: `${c.address}, Lagos, Nigeria`, fromAddress: true });
-      queries.push({ q: `${c.name}, ${c.area ?? c.city ?? ''}, Lagos, Nigeria`, fromAddress: false });
-      if (c.area) queries.push({ q: `${c.area}, Lagos, Nigeria`, fromAddress: false });
+      const tokens = c.area ? areaTokens(c.area) : [];
+      const queries: { q: string; fromAddress: boolean; centroid: boolean }[] = [];
+      if (c.address) {
+        queries.push({ q: `${c.address}, Lagos, Nigeria`, fromAddress: true, centroid: false });
+      }
+      queries.push({
+        q: `${c.name}, ${tokens[0] ?? c.city ?? ''}, Lagos, Nigeria`,
+        fromAddress: false,
+        centroid: false,
+      });
+      for (const t of tokens) {
+        queries.push({ q: `${t}, Lagos, Nigeria`, fromAddress: false, centroid: true });
+      }
 
       let hit: Hit | null = null;
       let usedAreaCentroid = false;
-      for (let i = 0; i < queries.length && !hit; i++) {
-        hit = await tryProviders(queries[i].q, key, queries[i].fromAddress);
+      for (const query of queries) {
+        hit = await tryProviders(query.q, key, query.fromAddress);
         if (hit && !inLagos(hit.lat, hit.lng)) hit = null;
-        usedAreaCentroid = !!hit && i === queries.length - 1 && !!c.area;
+        if (hit) {
+          usedAreaCentroid = query.centroid;
+          break;
+        }
       }
 
       if (!hit) {
