@@ -37,6 +37,21 @@ matching `RawCandidateSchema` in [schema.ts](schema.ts). Rules:
 To run discovery for a new region, prompt agents with the contract above and
 drop their JSON into `data/raw/`, then re-run the pipeline.
 
+### Social-surfaced lane
+
+Many small schools exist only as a Facebook/Instagram page. Those platforms
+are still never crawled; instead a search-snippet lane finds them:
+
+1. An agent runs `site:facebook.com` / `site:instagram.com`-style searches and
+   records name/handle/area **from the search snippets only**, with the page
+   URL as `source_url`.
+2. `normalize` detects locked-platform source URLs, caps `confidence` at 0.5,
+   and sets `needs_verification=TRUE` in the sheet.
+3. A **human** (optionally assisted by Claude in Chrome on the reviewer's own
+   logged-in session, low volume, supervised) opens each page, confirms
+   name/address/phone, edits the row, and only then sets `approved=TRUE`.
+   `upload` warns if approved rows still carry the flag.
+
 ## Review
 
 `data/review-sheet.csv` opens directly in Google Sheets (File → Import) or

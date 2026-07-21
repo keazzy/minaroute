@@ -55,6 +55,16 @@ async function main() {
 
   console.log(`📄 ${csvPath}`);
   console.log(`   ${rows.length} rows, ${approved.length} approved\n`);
+
+  const unverified = approved.filter((r) => (r.needs_verification ?? '') === 'true');
+  if (unverified.length) {
+    console.log(
+      `⚠️  ${unverified.length} approved row(s) are flagged needs_verification ` +
+        `(social-surfaced):\n` +
+        unverified.map((r) => `   • ${r.name}`).join('\n') +
+        '\n   Approving means you opened the page and confirmed the details.\n',
+    );
+  }
   if (approved.length === 0) {
     console.log('Nothing approved — set approved=TRUE on rows to upload.');
     return;

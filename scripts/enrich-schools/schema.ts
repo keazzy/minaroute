@@ -54,6 +54,10 @@ export const CandidateSchema = RawCandidateSchema.extend({
   dedup_status: DedupStatus.default('pending'),
   matched_place_id: z.string().nullable().default(null),
   matched_place_name: z.string().nullable().default(null),
+  // Social-surfaced lane: candidate only known from a locked platform's page
+  // (found via search snippets, never crawled) — a human must open the page
+  // in a browser and confirm details before approving.
+  needs_verification: z.boolean().default(false),
 });
 
 export type Candidate = z.infer<typeof CandidateSchema>;
@@ -82,6 +86,7 @@ export const SHEET_COLUMNS = [
   'dedup_status',
   'matched_place_id',
   'matched_place_name',
+  'needs_verification',
   'approved',
   'reviewer_notes',
 ] as const;

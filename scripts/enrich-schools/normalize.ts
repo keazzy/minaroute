@@ -9,7 +9,7 @@
  * Usage: npm run schools:normalize
  */
 
-import { readdirSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 import {
   CANDIDATES_JSON,
@@ -23,6 +23,21 @@ import {
 import { Candidate, RawCandidateSchema } from './schema';
 
 const SAME_NAME_THRESHOLD = 0.8;
+
+/**
+ * Locked platforms we never crawl. A row sourced only from one of these came
+ * from search-engine snippets — it enters the sheet flagged for human
+ * in-browser verification with capped confidence.
+ */
+const SOCIAL_HOSTS = /(^|\.)(facebook\.com|m\.facebook\.com|instagram\.com|tiktok\.com|x\.com|twitter\.com)$/i;
+
+function isSocialUrl(url: string): boolean {
+  try {
+    return SOCIAL_HOSTS.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
 
 function normalizeUrl(url: string | null): string | null {
   if (!url) return null;
@@ -93,6 +108,7 @@ function main() {
       }
 
       const r = parsed.data;
+      const social = isSocialUrl(r.source_url);
       const candidate: Candidate = {
         ...r,
         id: slugify(r.name, r.area ?? ''),
@@ -102,6 +118,8 @@ function main() {
         website: normalizeUrl(r.website),
         image_url: normalizeUrl(r.image_url),
         phone: cleanPhone(r.phone),
+        confidence: social ? Math.min(r.confidence, 0.5) : r.confidence,
+        needs_verification: social,
         lat: null,
         lng: null,
         geocode_status: 'pending',
@@ -131,9 +149,29 @@ function main() {
     console.log(`📄 ${file}: ${raw.length} rows → ${ok} new candidates`);
   }
 
+  // Re-runs must not wipe later-stage results: carry over geocode/dedupe
+  // output from the existing candidates.json for ids that already went through.
+  let carried = 0;
+  if (existsSync(CANDIDATES_JSON)) {
+    const prev = new Map(readJson<Candidate[]>(CANDIDATES_JSON).map((c) => [c.id, c]));
+    for (const c of candidates) {
+      const old = prev.get(c.id);
+      if (old && old.geocode_status !== 'pending') {
+        c.lat = old.lat;
+        c.lng = old.lng;
+        c.geocode_status = old.geocode_status;
+        c.dedup_status = old.dedup_status;
+        c.matched_place_id = old.matched_place_id;
+        c.matched_place_name = old.matched_place_name;
+        carried++;
+      }
+    }
+  }
+
   writeJson(CANDIDATES_JSON, candidates);
   console.log(
     `\n✅ ${candidates.length} unique candidates → ${CANDIDATES_JSON}` +
+      (carried ? `\n   ${carried} kept their existing geocode/dedupe results` : '') +
       (invalid ? `\n⚠️  ${invalid} invalid rows dropped (see warnings above)` : ''),
   );
 }
