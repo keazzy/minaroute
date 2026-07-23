@@ -32,7 +32,17 @@ import {
 const PROXIMITY_METERS = 150;
 const SAME_NAME = 0.8;
 
-const OPTIONAL_COLUMNS = ['source_url', 'website', 'phone', 'email', 'verified_at'];
+const OPTIONAL_COLUMNS = [
+  'source_url',
+  'website',
+  'phone',
+  'email',
+  'verified_at',
+  'area',
+  'social_handle',
+  'source_notes',
+  'location_precision',
+];
 
 function isApproved(value: string): boolean {
   return ['true', 'yes', 'y', '1', '✔', 'x'].includes(value.trim().toLowerCase());
@@ -153,6 +163,16 @@ async function main() {
     if (available.has('phone')) payload.phone = orNull(r.phone);
     if (available.has('email')) payload.email = orNull(r.email);
     if (available.has('verified_at')) payload.verified_at = new Date().toISOString();
+    if (available.has('area')) payload.area = orNull(r.area);
+    if (available.has('social_handle')) payload.social_handle = orNull(r.social_handle);
+    if (available.has('source_notes')) payload.source_notes = orNull(r.evidence);
+    if (available.has('location_precision')) {
+      // ok = street-level geocode; approx = area-level; anything else with
+      // valid coords means the reviewer typed them in the sheet
+      const status = (r.geocode_status ?? '').trim();
+      payload.location_precision =
+        status === 'ok' ? 'exact' : status === 'approx' ? 'approximate' : 'manual';
+    }
 
     payloads.push(payload);
     // Guard against duplicate approved rows within the same sheet

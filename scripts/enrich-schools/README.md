@@ -71,8 +71,9 @@ Requires `SUPABASE_SERVICE_KEY` in `.env.local` (RLS: `places` writes are
 service-role only — never the anon key). Idempotent: re-runs skip anything
 already in `places` (fuzzy name within 150 m). Apply
 [supabase/migrations/0002_places_provenance.sql](../../supabase/migrations/0002_places_provenance.sql)
-first to keep `source_url`/`website`/`phone`/`email` — without it the uploader
-warns and drops those fields.
+first to keep the contact + provenance fields (`source_url`, `website`,
+`phone`, `email`, `verified_at`, `area`, `social_handle`, `source_notes`,
+`location_precision`) — without it the uploader warns and drops them.
 
 ## Env (`.env.local`)
 
