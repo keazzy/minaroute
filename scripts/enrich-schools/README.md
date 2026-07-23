@@ -77,4 +77,9 @@ warns and drops those fields.
 ## Env (`.env.local`)
 
 - `SUPABASE_SERVICE_KEY` — dedupe (read) + upload (write)
-- `GOOGLE_MAPS_KEY` or `GOOGLE_PLACES_API_KEY` — geocoding
+- `MAPBOX_ACCESS_TOKEN` — preferred geocoder (app map stack is moving to
+  Mapbox). Uses permanent mode (storable results, needs billing on the Mapbox
+  account); `MAPBOX_PERMANENT=false` for throwaway smoke tests only.
+- `GOOGLE_MAPS_KEY` / `GOOGLE_PLACES_API_KEY` — Google geocoding fallback;
+  fine only while results are shown on Google maps (ToS)
+- No keys at all → OSM Nominatim (free, area-level precision)

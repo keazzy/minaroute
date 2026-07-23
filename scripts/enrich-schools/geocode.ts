@@ -3,9 +3,14 @@
  *
  * Provider chain — each is skipped automatically once it returns a
  * permission/activation error:
- *   1. Google Geocoding API   (precise; needs the API enabled on the project)
- *   2. Google Places Text Search (same key as import-mosques)
- *   3. OSM Nominatim          (free fallback, 1 req/s, area-level precision)
+ *   1. Mapbox Geocoding v6    (used when MAPBOX_ACCESS_TOKEN is set; the
+ *      app's map stack is moving to Mapbox, and storing coords requires
+ *      Mapbox's "permanent" mode — set MAPBOX_PERMANENT=false only for
+ *      throwaway smoke tests)
+ *   2. Google Geocoding API   (precise; needs the API enabled + a key whose
+ *      restrictions allow it; ToS-fine only while the app shows Google maps)
+ *   3. Google Places Text Search (same key as import-mosques)
+ *   4. OSM Nominatim          (free fallback, 1 req/s, area-level precision)
  *
  * Reads data/candidates.json, fills lat/lng + geocode_status, writes back in
  * place. Already-geocoded rows are skipped, so the script is re-runnable —
@@ -24,7 +29,6 @@
 
 import {
   CANDIDATES_JSON,
-  getGoogleKey,
   readJson,
   requireFile,
   sleep,
@@ -42,6 +46,9 @@ interface Hit {
   precise: boolean; // street/rooftop-level from a full-address Google match
   provider: string;
 }
+
+const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN || '';
+const MAPBOX_PERMANENT = process.env.MAPBOX_PERMANENT !== 'false';
 
 const denied = new Set<string>();
 let lastNominatim = 0;
@@ -62,6 +69,44 @@ function areaTokens(area: string): string[] {
 
 function inLagos(lat: number, lng: number): boolean {
   return lat >= BOUNDS.minLat && lat <= BOUNDS.maxLat && lng >= BOUNDS.minLng && lng <= BOUNDS.maxLng;
+}
+
+async function mapbox(query: string, fromAddress: boolean): Promise<Hit | null> {
+  const params = new URLSearchParams({
+    q: query,
+    access_token: MAPBOX_TOKEN,
+    country: 'ng',
+    bbox: `${BOUNDS.minLng},${BOUNDS.minLat},${BOUNDS.maxLng},${BOUNDS.maxLat}`,
+    limit: '1',
+    permanent: String(MAPBOX_PERMANENT),
+  });
+  const res = await fetch(`https://api.mapbox.com/search/geocode/v6/forward?${params}`);
+  if (res.status === 401 || res.status === 403 || res.status === 422) {
+    denied.add('mapbox');
+    const body = await res.text();
+    console.log(
+      `   ℹ️  Mapbox unavailable (HTTP ${res.status}: ${body.slice(0, 120)}) — falling back` +
+        (MAPBOX_PERMANENT ? '\n      (permanent mode needs billing enabled; MAPBOX_PERMANENT=false for smoke tests)' : ''),
+    );
+    return null;
+  }
+  if (!res.ok) throw new Error(`Mapbox HTTP ${res.status}`);
+  const data = (await res.json()) as {
+    features?: {
+      properties?: {
+        feature_type?: string;
+        coordinates?: { latitude: number; longitude: number };
+      };
+    }[];
+  };
+  const top = data.features?.[0]?.properties;
+  if (!top?.coordinates) return null;
+  return {
+    lat: top.coordinates.latitude,
+    lng: top.coordinates.longitude,
+    precise: fromAddress && top.feature_type === 'address',
+    provider: 'mapbox',
+  };
 }
 
 async function googleGeocode(query: string, key: string, fromAddress: boolean): Promise<Hit | null> {
@@ -151,6 +196,10 @@ async function nominatim(query: string): Promise<Hit | null> {
 }
 
 async function tryProviders(query: string, key: string, fromAddress: boolean): Promise<Hit | null> {
+  if (MAPBOX_TOKEN && !denied.has('mapbox')) {
+    const hit = await mapbox(query, fromAddress);
+    if (hit) return hit;
+  }
   if (!denied.has('google-geocoding')) {
     const hit = await googleGeocode(query, key, fromAddress);
     if (hit) return hit;
@@ -169,7 +218,18 @@ async function main() {
   requireFile(CANDIDATES_JSON, 'Run schools:normalize first.');
   const retry = process.argv.includes('--retry');
   const retryFailed = process.argv.includes('--retry-failed');
-  const key = getGoogleKey();
+  const key =
+    process.env.GOOGLE_MAPS_KEY ||
+    process.env.GOOGLE_PLACES_API_KEY ||
+    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
+    '';
+  if (!key) {
+    denied.add('google-geocoding');
+    denied.add('google-places');
+  }
+  if (!MAPBOX_TOKEN && !key) {
+    console.log('ℹ️  No MAPBOX_ACCESS_TOKEN or Google key set — using Nominatim only');
+  }
   const candidates = readJson<Candidate[]>(CANDIDATES_JSON);
 
   if (retry || retryFailed) {
@@ -246,10 +306,10 @@ async function main() {
     `\n✅ Geocoding: ${ok} ok, ${approx} approx, ${failed} failed, ${skipped} skipped` +
       `\n   → ${CANDIDATES_JSON}`,
   );
-  if (denied.has('google-geocoding')) {
+  if (!MAPBOX_TOKEN && denied.has('google-geocoding')) {
     console.log(
-      '\nℹ️  For precise coords: enable the Geocoding API on the Google Cloud project,' +
-        '\n   then run: npm run schools:geocode -- --retry',
+      '\nℹ️  For precise coords: set MAPBOX_ACCESS_TOKEN in .env.local (or enable the' +
+        '\n   Google Geocoding API), then run: npm run schools:geocode -- --retry',
     );
   }
   const pending = candidates.filter((c) => c.geocode_status === 'pending').length;
