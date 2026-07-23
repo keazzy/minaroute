@@ -29,6 +29,7 @@
 
 import {
   CANDIDATES_JSON,
+  haversineMeters,
   readJson,
   requireFile,
   sleep,
@@ -73,7 +74,7 @@ function inLagos(lat: number, lng: number): boolean {
 
 async function mapbox(query: string, fromAddress: boolean): Promise<Hit | null> {
   const params = new URLSearchParams({
-    q: query,
+    q: query.split(/\s+/).slice(0, 18).join(' '), // v6 rejects queries > 20 tokens
     access_token: MAPBOX_TOKEN,
     country: 'ng',
     bbox: `${BOUNDS.minLng},${BOUNDS.minLat},${BOUNDS.maxLng},${BOUNDS.maxLat}`,
@@ -96,15 +97,19 @@ async function mapbox(query: string, fromAddress: boolean): Promise<Hit | null> 
       properties?: {
         feature_type?: string;
         coordinates?: { latitude: number; longitude: number };
+        match_code?: { confidence?: string };
       };
     }[];
   };
   const top = data.features?.[0]?.properties;
   if (!top?.coordinates) return null;
+  // Smoke test showed "address"-type hits landing on same-named streets across
+  // town — require Mapbox's own match confidence before calling it precise.
+  const confident = ['exact', 'high'].includes(top.match_code?.confidence ?? '');
   return {
     lat: top.coordinates.latitude,
     lng: top.coordinates.longitude,
-    precise: fromAddress && top.feature_type === 'address',
+    precise: fromAddress && top.feature_type === 'address' && confident,
     provider: 'mapbox',
   };
 }
@@ -195,6 +200,33 @@ async function nominatim(query: string): Promise<Hit | null> {
   return { lat: Number(top.lat), lng: Number(top.lon), precise: false, provider: 'nominatim' };
 }
 
+/**
+ * A hit that lands further than this from the candidate's own area centroid is
+ * a same-named-street mismatch (smoke test: an "Epe" school placed 70 km away
+ * in metro Lagos), not a school. Lagos LGAs are big; 12 km allows for that.
+ */
+const MAX_AREA_DRIFT_METERS = 12000;
+
+const centroidCache = new Map<string, { lat: number; lng: number } | null>();
+
+async function areaCentroid(
+  area: string,
+  key: string,
+): Promise<{ lat: number; lng: number } | null> {
+  for (const token of areaTokens(area)) {
+    if (!centroidCache.has(token)) {
+      const hit = await tryProviders(`${token}, Lagos, Nigeria`, key, false);
+      centroidCache.set(
+        token,
+        hit && inLagos(hit.lat, hit.lng) ? { lat: hit.lat, lng: hit.lng } : null,
+      );
+    }
+    const cached = centroidCache.get(token);
+    if (cached) return cached;
+  }
+  return null;
+}
+
 async function tryProviders(query: string, key: string, fromAddress: boolean): Promise<Hit | null> {
   if (MAPBOX_TOKEN && !denied.has('mapbox')) {
     const hit = await mapbox(query, fromAddress);
@@ -255,28 +287,40 @@ async function main() {
 
     try {
       const tokens = c.area ? areaTokens(c.area) : [];
-      const queries: { q: string; fromAddress: boolean; centroid: boolean }[] = [];
+      const centroid = c.area ? await areaCentroid(c.area, key) : null;
+
+      const queries: { q: string; fromAddress: boolean }[] = [];
       if (c.address) {
-        queries.push({ q: `${c.address}, Lagos, Nigeria`, fromAddress: true, centroid: false });
+        queries.push({ q: `${c.address}, Lagos, Nigeria`, fromAddress: true });
       }
       queries.push({
         q: `${c.name}, ${tokens[0] ?? c.city ?? ''}, Lagos, Nigeria`,
         fromAddress: false,
-        centroid: false,
       });
-      for (const t of tokens) {
-        queries.push({ q: `${t}, Lagos, Nigeria`, fromAddress: false, centroid: true });
-      }
 
       let hit: Hit | null = null;
-      let usedAreaCentroid = false;
       for (const query of queries) {
-        hit = await tryProviders(query.q, key, query.fromAddress);
-        if (hit && !inLagos(hit.lat, hit.lng)) hit = null;
-        if (hit) {
-          usedAreaCentroid = query.centroid;
+        let h = await tryProviders(query.q, key, query.fromAddress);
+        if (h && !inLagos(h.lat, h.lng)) h = null;
+        if (h && centroid) {
+          const drift = haversineMeters(h.lat, h.lng, centroid.lat, centroid.lng);
+          if (drift > MAX_AREA_DRIFT_METERS) {
+            console.log(
+              `   ⚠️  ${c.name}: rejected ${h.provider} hit ${(drift / 1000).toFixed(1)}km from ${c.area}`,
+            );
+            h = null;
+          }
+        }
+        if (h) {
+          hit = h;
           break;
         }
+      }
+
+      let usedAreaCentroid = false;
+      if (!hit && centroid) {
+        hit = { lat: centroid.lat, lng: centroid.lng, precise: false, provider: 'area-centroid' };
+        usedAreaCentroid = true;
       }
 
       if (!hit) {
@@ -288,7 +332,7 @@ async function main() {
         c.lng = Number(hit.lng.toFixed(6));
         c.geocode_status = hit.precise ? 'ok' : 'approx';
         if (usedAreaCentroid) {
-          const note = `geocode: area centroid via ${hit.provider}`;
+          const note = 'geocode: area centroid';
           c.evidence = c.evidence ? `${c.evidence}; ${note}` : note;
         }
         hit.precise ? ok++ : approx++;
