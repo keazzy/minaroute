@@ -47,6 +47,20 @@ const ICONS = {
 
 type Gate = 'loading' | 'onboarding' | 'permission' | 'ok';
 
+// A SecureStore read can reject transiently on cold boot (e.g. the keychain is
+// briefly locked) even though the value is present on disk. Retry once with a
+// short backoff before letting the failure propagate.
+const READ_RETRY_DELAY_MS = 150;
+
+async function readFlagWithRetry(key: string): Promise<string | null> {
+  try {
+    return await Storage.getItemAsync(key);
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, READ_RETRY_DELAY_MS));
+    return Storage.getItemAsync(key);
+  }
+}
+
 export default function TabsLayout() {
   const { t } = useTranslation();
   const [gate, setGate] = useState<Gate>('loading');
@@ -54,12 +68,25 @@ export default function TabsLayout() {
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
+      // Resolve the onboarding flag first. A genuinely unseen flag reads back as
+      // null (SecureStore returns null for a missing key — it does not throw), so
+      // the first-run path stays correct. A *thrown* read means the keychain was
+      // unavailable, not that the user is new: don't force a returning, onboarded
+      // user back through onboarding on a transient fault — keep them in the shell.
+      let seen: string | null;
       try {
-        const seen = await Storage.getItemAsync(ONBOARDING_SEEN_KEY);
-        if (cancelled) return;
-        if (seen !== '1') return setGate('onboarding');
+        seen = await readFlagWithRetry(ONBOARDING_SEEN_KEY);
+      } catch {
+        if (!cancelled) setGate('ok');
+        return;
+      }
+      if (cancelled) return;
+      if (seen !== '1') return setGate('onboarding');
 
-        const skipped = await Storage.getItemAsync(LOCATION_PERMISSION_SKIP_KEY);
+      // Onboarded. Resolve the permission gate. Any failure here is non-fatal —
+      // fall through to the shell rather than re-onboarding an established user.
+      try {
+        const skipped = await readFlagWithRetry(LOCATION_PERMISSION_SKIP_KEY);
         if (cancelled) return;
         if (skipped === '1') return setGate('ok');
 
@@ -67,7 +94,7 @@ export default function TabsLayout() {
         if (cancelled) return;
         setGate(perm.status === ExpoLocation.PermissionStatus.GRANTED ? 'ok' : 'permission');
       } catch {
-        if (!cancelled) setGate('onboarding');
+        if (!cancelled) setGate('ok');
       }
     };
     void check();
