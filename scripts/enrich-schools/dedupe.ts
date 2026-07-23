@@ -12,11 +12,15 @@
  * Usage: npm run schools:dedupe
  */
 
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import {
   CANDIDATES_JSON,
+  DATA_DIR,
   getServiceClient,
   haversineMeters,
   nameSimilarity,
+  namesLikelySame,
   readJson,
   requireFile,
   writeJson,
@@ -59,6 +63,18 @@ function main() {
   requireFile(CANDIDATES_JSON, 'Run schools:normalize (and schools:geocode) first.');
   const candidates = readJson<Candidate[]>(CANDIDATES_JSON);
 
+  // Human-reviewed "these are NOT the same place" pairs — e.g. Ansar-Ud-Deen
+  // Primary School (Alakoro) vs the Society's Grammar School in Surulere.
+  const notDupsPath = resolve(DATA_DIR, 'not-dups.json');
+  const notDups = new Set<string>(
+    existsSync(notDupsPath)
+      ? readJson<{ candidate_id: string; place_id: string }[]>(notDupsPath).map(
+          (p) => `${p.candidate_id}::${p.place_id}`,
+        )
+      : [],
+  );
+  if (notDups.size) console.log(`🚫 ${notDups.size} reviewed not-dup pairs loaded`);
+
   fetchAllPlaces().then((places) => {
     console.log(`📋 ${places.length} existing places fetched`);
 
@@ -71,20 +87,26 @@ function main() {
       let match: ExistingPlace | null = null;
 
       for (const p of places) {
-        const sim = nameSimilarity(c.name, p.name);
+        if (notDups.has(`${c.id}::${p.id}`)) continue;
+        const sameName =
+          nameSimilarity(c.name, p.name) >= SAME_NAME ||
+          namesLikelySame(c.name, p.name, c.area);
         const hasCoords =
           c.lat != null && c.lng != null && p.latitude != null && p.longitude != null;
         const dist = hasCoords
           ? haversineMeters(c.lat!, c.lng!, p.latitude!, p.longitude!)
           : Infinity;
 
-        if (sim >= SAME_NAME && dist <= PROXIMITY_METERS) {
+        if (sameName && dist <= PROXIMITY_METERS) {
           status = 'dup';
           match = p;
           break;
         }
         if (status !== 'dup') {
-          if (sim >= SAME_NAME || (dist <= PROXIMITY_METERS && sim >= SIMILAR_NAME)) {
+          if (
+            sameName ||
+            (dist <= PROXIMITY_METERS && nameSimilarity(c.name, p.name) >= SIMILAR_NAME)
+          ) {
             status = 'likely-dup';
             match = match ?? p;
           }

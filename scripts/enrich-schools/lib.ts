@@ -196,6 +196,70 @@ export function nameSimilarity(a: string, b: string): number {
   return inter / (ta.size + tb.size - inter);
 }
 
+/** Lowercased alphanumeric form for whole-name containment checks. */
+export function normalizedName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** One normalized name contains the other ("X (LEMU Schools)" ⊃ "X"). */
+export function rawContains(a: string, b: string): boolean {
+  const na = normalizedName(a);
+  const nb = normalizedName(b);
+  return na.length > 0 && nb.length > 0 && (na.includes(nb) || nb.includes(na));
+}
+
+/**
+ * Muslim-association name particles ("Ansar-Ud-Deen …") — dozens of distinct
+ * schools share these, so they don't count toward subset-style matching.
+ */
+const ASSOCIATION_TOKENS = new Set([
+  'ansar',
+  'ud',
+  'deen',
+  'anwar',
+  'ul',
+  'al',
+  'islam',
+  'nawair',
+  'zumratul',
+  'jamat',
+  'jamaatul',
+  'ahmadiyya',
+  'nasfat',
+  'society',
+]);
+
+/**
+ * Aggressive same-name test for dedupe against the DB: token Jaccard ≥ 0.8
+ * after stripping the candidate's own area words from both sides, OR one
+ * side's distinctive tokens fully contained in the other's (≥2 non-association
+ * tokens). Catches "Markaz (…), Agege" ↔ "Markaz Arabic and Islamic Training
+ * Centre" and "Daarus Salam Tahfidh Int'l Academy (DASTIA)" ↔ the DB row.
+ */
+export function namesLikelySame(a: string, b: string, area?: string | null): boolean {
+  const strip = (tokens: Set<string>) => {
+    if (!area) return tokens;
+    const areaToks = nameTokens(area);
+    return new Set([...tokens].filter((t) => !areaToks.has(t)));
+  };
+  const ta = strip(nameTokens(a));
+  const tb = strip(nameTokens(b));
+  if (ta.size === 0 || tb.size === 0) return rawContains(a, b);
+
+  let inter = 0;
+  for (const t of ta) if (tb.has(t)) inter++;
+  if (inter / (ta.size + tb.size - inter) >= 0.8) return true;
+
+  const [small, big] = ta.size <= tb.size ? [ta, tb] : [tb, ta];
+  const distinctive = [...small].filter((t) => !ASSOCIATION_TOKENS.has(t));
+  return distinctive.length >= 2 && [...small].every((t) => big.has(t));
+}
+
 export function haversineMeters(
   lat1: number,
   lng1: number,

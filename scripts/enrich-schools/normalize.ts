@@ -17,6 +17,7 @@ import {
   DATA_DIR,
   RAW_DIR,
   nameSimilarity,
+  rawContains,
   readJson,
   requireFile,
   slugify,
@@ -144,11 +145,19 @@ function main() {
         matched_place_name: null,
       };
 
-      // Intra-batch dedupe: fuzzy same name + same (or unknown) area
+      // Intra-batch dedupe: same area AND (high token similarity OR one name
+      // containing the other). Token similarity alone is not enough — with
+      // generic words stopworded, "Ansar Ud Deen Academy" and "Ansar-Ud-Deen
+      // Grammar School" collapse to the same tokens yet are different schools.
       const existing = candidates.find(
         (c) =>
-          nameSimilarity(c.name, candidate.name) >= SAME_NAME_THRESHOLD &&
-          sameArea(c.area, candidate.area),
+          sameArea(c.area, candidate.area) &&
+          (rawContains(c.name, candidate.name) ||
+            (nameSimilarity(c.name, candidate.name) >= SAME_NAME_THRESHOLD &&
+              rawContains(
+                c.name.replace(/\(.*?\)/g, ''),
+                candidate.name.replace(/\(.*?\)/g, ''),
+              ))),
       );
       if (existing) {
         mergeInto(existing, candidate);

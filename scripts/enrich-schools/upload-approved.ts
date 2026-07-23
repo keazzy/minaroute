@@ -97,11 +97,16 @@ async function main() {
   }
 
   // Existing places for idempotency (re-running the upload must not duplicate)
-  const existing: { name: string; latitude: number | null; longitude: number | null }[] = [];
+  const existing: {
+    id: string;
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+  }[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from('places')
-      .select('name,latitude,longitude')
+      .select('id,name,latitude,longitude')
       .range(from, from + 999);
     if (error) {
       console.error('❌ Failed to fetch places:', error.message);
@@ -112,6 +117,7 @@ async function main() {
   }
 
   const payloads: Record<string, unknown>[] = [];
+  const merges: { placeId: string; placeName: string; row: Record<string, string> }[] = [];
   let refused = 0;
   let skippedExisting = 0;
 
@@ -130,6 +136,17 @@ async function main() {
       refused++;
       continue;
     }
+    if ((r.dedup_status ?? '').trim() === 'likely-dup') {
+      // Approving a likely-dup means "same place — enrich the existing row"
+      const placeId = orNull(r.matched_place_id);
+      if (!placeId) {
+        console.log(`   ❌ refused "${name}": likely-dup but no matched_place_id (re-run dedupe)`);
+        refused++;
+        continue;
+      }
+      merges.push({ placeId, placeName: r.matched_place_name ?? placeId, row: r });
+      continue;
+    }
     const already = existing.find(
       (p) =>
         p.latitude != null &&
@@ -144,9 +161,10 @@ async function main() {
     }
 
     const image = orNull(r.image_url);
+    // lowercase to match the existing rows' category value
     const payload: Record<string, unknown> = {
       name,
-      category: 'School',
+      category: 'school',
       description: orNull(r.description),
       address: orNull(r.address),
       city: orNull(r.city),
@@ -181,14 +199,76 @@ async function main() {
   }
 
   console.log(
-    `\n📊 ${payloads.length} to insert, ${skippedExisting} already present, ${refused} refused`,
+    `\n📊 ${payloads.length} to insert, ${merges.length} to enrich (merge into existing), ` +
+      `${skippedExisting} already present, ${refused} refused`,
   );
   if (dryRun) {
-    console.log('\n🔎 Dry run — nothing written. Payloads:');
-    for (const p of payloads) console.log(`   • ${p.name} (${p.latitude}, ${p.longitude})`);
+    console.log('\n🔎 Dry run — nothing written.');
+    for (const p of payloads) console.log(`   + insert ${p.name} (${p.latitude}, ${p.longitude})`);
+    for (const m of merges) console.log(`   ~ enrich "${m.placeName}" ← ${m.row.name}`);
     return;
   }
-  if (payloads.length === 0) return;
+
+  // Enrich matched existing rows: fill ONLY empty columns — approved reviewer
+  // data never overwrites curated values, and name/verified are never touched.
+  const precisionOf = (r: Record<string, string>) => {
+    const s = (r.geocode_status ?? '').trim();
+    return s === 'ok' ? 'exact' : s === 'approx' ? 'approximate' : 'manual';
+  };
+  const MERGE_FIELDS: [string, (r: Record<string, string>) => unknown][] = [
+    ['description', (r) => orNull(r.description)],
+    ['address', (r) => orNull(r.address)],
+    ['city', (r) => orNull(r.city)],
+    ['state', (r) => orNull(r.state)],
+    ['latitude', (r) => (Number.isFinite(Number(r.lat)) ? Number(r.lat) : null)],
+    ['longitude', (r) => (Number.isFinite(Number(r.lng)) ? Number(r.lng) : null)],
+    ['photos', (r) => (orNull(r.image_url) ? [r.image_url.trim()] : null)],
+    ['source_url', (r) => orNull(r.source_url)],
+    ['website', (r) => orNull(r.website)],
+    ['phone', (r) => orNull(r.phone)],
+    ['email', (r) => orNull(r.email)],
+    ['area', (r) => orNull(r.area)],
+    ['social_handle', (r) => orNull(r.social_handle)],
+    ['source_notes', (r) => orNull(r.evidence)],
+    ['location_precision', precisionOf],
+  ];
+
+  let enriched = 0;
+  for (const m of merges) {
+    const { data: current, error: fetchErr } = await supabase
+      .from('places')
+      .select('*')
+      .eq('id', m.placeId)
+      .single();
+    if (fetchErr || !current) {
+      console.log(`   ⚠️  enrich "${m.placeName}": could not fetch (${fetchErr?.message})`);
+      continue;
+    }
+    const update: Record<string, unknown> = {};
+    for (const [col, getter] of MERGE_FIELDS) {
+      if (!(col in current) || (current[col] != null && current[col] !== '')) continue;
+      const value = getter(m.row);
+      if (value != null) update[col] = value;
+    }
+    if (Object.keys(update).length === 0) {
+      console.log(`   = "${m.placeName}": nothing to enrich`);
+      continue;
+    }
+    const { error: updateErr } = await supabase.from('places').update(update).eq('id', m.placeId);
+    if (updateErr) {
+      console.log(`   ⚠️  enrich "${m.placeName}" failed: ${updateErr.message}`);
+    } else {
+      enriched++;
+      console.log(`   ~ enriched "${m.placeName}": ${Object.keys(update).join(', ')}`);
+    }
+  }
+  if (merges.length) console.log(`\n📊 ${enriched}/${merges.length} existing rows enriched`);
+
+  if (payloads.length === 0) {
+    if (!merges.length) return;
+    console.log('\n✅ Upload complete (enrichment only).');
+    return;
+  }
 
   let inserted = 0;
   for (let i = 0; i < payloads.length; i += 50) {
