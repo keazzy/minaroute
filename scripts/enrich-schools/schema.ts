@@ -39,6 +39,7 @@ export const GeocodeStatus = z.enum([
   'ok', // full address geocoded, inside Lagos bounds
   'approx', // geocoded from name/area only, or partial match — coords need eyeballing
   'failed', // no result / outside Lagos bounds — needs manual coords
+  'manual', // coords set by a human (override/sheet) — geocode never touches them
   'pending', // not yet geocoded
 ]);
 

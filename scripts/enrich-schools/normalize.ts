@@ -195,6 +195,7 @@ function main() {
   if (existsSync(CANDIDATES_JSON)) {
     const prev = new Map(readJson<Candidate[]>(CANDIDATES_JSON).map((c) => [c.id, c]));
     for (const c of candidates) {
+      if (c.geocode_status === 'manual') continue; // override-pinned coords win
       const old = prev.get(c.id);
       if (old && old.geocode_status !== 'pending') {
         c.lat = old.lat;

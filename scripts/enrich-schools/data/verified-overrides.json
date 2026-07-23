@@ -1,4 +1,10 @@
 {
+  "sibaam-golden-school-baruwa-ipaja-ayobo-axis": {
+    "lat": 6.605865,
+    "lng": 3.264367,
+    "geocode_status": "manual",
+    "evidence_append": "Coords hand-pinned to the Ipaja Road corridor anchor (Nominatim mismatched a Baruwa Street in Mushin; school confirmed in Baruwa via user + Google listing). geocode --retry must not overwrite"
+  },
   "khalifet-islamic-school-lagos-island": {
     "address": "26 Glover Street, Lagos Island",
     "confidence": 0.75,
