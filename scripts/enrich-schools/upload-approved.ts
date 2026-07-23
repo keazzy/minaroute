@@ -162,7 +162,8 @@ async function main() {
     if (available.has('website')) payload.website = orNull(r.website);
     if (available.has('phone')) payload.phone = orNull(r.phone);
     if (available.has('email')) payload.email = orNull(r.email);
-    if (available.has('verified_at')) payload.verified_at = new Date().toISOString();
+    // verified/verified_at stay false/null at upload — the verified badge comes
+    // from the on-ground/owner verification program, not from data approval.
     if (available.has('area')) payload.area = orNull(r.area);
     if (available.has('social_handle')) payload.social_handle = orNull(r.social_handle);
     if (available.has('source_notes')) payload.source_notes = orNull(r.evidence);

@@ -15,7 +15,7 @@ alter table public.places
   add column if not exists location_precision text;
 
 comment on column public.places.source_url is 'URL where this place''s data was found (web-research provenance)';
-comment on column public.places.verified_at is 'When the data was last human-reviewed/approved';
+comment on column public.places.verified_at is 'When the place was verified (on-ground/owner confirmation) — pairs with verified; NULL until the verification program touches it';
 comment on column public.places.area is 'Neighbourhood/LGA within the city, e.g. "Baruwa / Ipaja" — Lagos navigation is area-based';
 comment on column public.places.social_handle is 'Primary social media handle, e.g. @sibaamgoldenschool';
 comment on column public.places.source_notes is 'Evidence trail from the enrichment pipeline (how the data was confirmed)';
