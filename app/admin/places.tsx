@@ -141,7 +141,7 @@ export default function AdminPlaces() {
     latitude: '',
     longitude: '',
     radiusMeters: '15000',
-    category: 'Mosque',
+    category: 'mosque',
   });
 
   const modalTitle = useMemo(() => {
@@ -448,7 +448,7 @@ export default function AdminPlaces() {
       latitude: '',
       longitude: '',
       radiusMeters: '15000',
-      category: 'Mosque',
+      category: 'mosque',
     });
   }, []);
 
@@ -471,7 +471,7 @@ export default function AdminPlaces() {
     if (Platform.OS !== 'web') return;
 
     const name = draft.name.trim();
-    const category = draft.category.trim();
+    const category = draft.category.trim().toLowerCase();
     if (!name || !category) {
       setError('Name and category are required');
       return;
@@ -839,7 +839,7 @@ export default function AdminPlaces() {
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>Category</Text>
                 <View style={styles.categoryButtons}>
-                  {['Mosque', 'School', 'Restaurant', 'Hospital'].map((cat) => (
+                  {['mosque', 'school', 'restaurant', 'hospital'].map((cat) => (
                     <TouchableOpacity
                       key={cat}
                       style={[

@@ -1,5 +1,5 @@
 import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
-import { CATEGORIES } from '@/constants/mockData';
+import { CATEGORIES, toCategorySlug } from '@/constants/mockData';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -226,7 +226,8 @@ export default function SubmitPlaceScreen() {
       const basePayload = {
         type,
         title: title.trim(),
-        category: category || null,
+        // UI shows display names ("Mosques"); the DB stores canonical slugs ("mosque")
+        category: category ? toCategorySlug(category) : null,
         city: city.trim(),
         state: stateValue.trim() || null,
         description: description.trim() || null,
