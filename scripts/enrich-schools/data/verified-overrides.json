@@ -1,0 +1,146 @@
+{
+  "khalifet-islamic-school-lagos-island": {
+    "address": "26 Glover Street, Lagos Island",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23 (reviewer's session): page live, est. 2007, address on page, 5 reviews 100% recommend, recent Islamic-calendar posts"
+  },
+  "iqrah-international-schools-ojo-iba": {
+    "address": "113, Aratumi Ishasi Road, Iba New Site, Ojo",
+    "phone": "+2348037191999",
+    "email": "info@iqrahschools.com",
+    "website": "https://iqrahschools.com",
+    "confidence": 0.85,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 'Private Muslim Co-Educational Secondary School', 2.7K followers, active; featured post also cites Lanre Mabawonku Street, Iba New Site"
+  },
+  "crest-islamic-international-school-ikorodu-ibeshe": {
+    "phone": "+234 805 459 7222, +234 903 434 6392",
+    "email": "info@crestislamicschool.com",
+    "image_url": "https://crestislamicschool.com/wp-content/uploads/2023/10/ciis-logo.jpg",
+    "source_url": "https://crestislamicschool.com/",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "FB page unavailable 2026-07-23, but own website live (content through 2024): Nigerian+international curricula with full Qur'an memorization; address and contacts from site"
+  },
+  "al-baraka-international-schools": {
+    "address": "65a, Oshundairo Street, Off Araromi Bus Stop, Iyana-Ipaja",
+    "area": "Iyana-Ipaja (Alimosho)",
+    "phone": "0803 358 7595",
+    "email": "albarakaschool1996@gmail.com",
+    "social_handle": "@albarakaschools",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: bio 'Islamic school… western education, STEM and Quran Memorization… Day and Boarding', 965 followers, active (hiring, Tahfiz graduations)"
+  },
+  "gifted-islamic-school": {
+    "name": "Gifted Islamic Academy (GIFTS)",
+    "address": "20A Muyibat Oyefusi Crescent, Omole Phase 1, Ikeja",
+    "area": "Omole Phase 1 (Ikeja)",
+    "city": "Lagos",
+    "phone": "+2347030210008",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: IG bio 'MUSLIM SCHOOL IN LAGOS', dual Islamic/Western, creche-daycare, Hifz highlights; FB sister page 'Gifted Islamic Foundation Tahfeez School' (1.9K followers) confirms GIFTS = Nursery/KG/Primary. Fills the Ikeja LGA gap"
+  },
+  "al-muhajiroon-school-ikorodu": {
+    "address": "16, Abiodun Aguda Way, Omitoro, Ikorodu",
+    "confidence": 0.6,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: tahfiz + secular home school, address on page; very small (19 followers), sparse activity"
+  },
+  "albushra-academy-for-quran-memorization-and-islamic-studies-epe": {
+    "address": "London Road, Iragunshin, Epe",
+    "email": "albushrahacademy@gmail.com",
+    "website": "https://albushraacademy.com",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 864 followers, address/website/email on page; FB category 'Mosque' but name and content are a Quran-memorization academy"
+  },
+  "darul-islam-schools-mushin": {
+    "address": "Old 19, Folami Street, Idi-Oro, Mushin",
+    "phone": "0802 343 5582",
+    "email": "islamdarul@yahoo.co.uk",
+    "confidence": 0.65,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 1.1K followers, address/phone/email on page; also announced a Qur'an Memorisation College. Visible posts skew 2019-2021 — confirm still operating"
+  },
+  "penckers-school-isolo": {
+    "address": "1 Addawat Close, off Adebisi Omotola, Isolo",
+    "website": "https://penckersschool.com",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 'education propelled by islamic values', 3.5K followers, active, address and website on page"
+  },
+  "modrasat-nosirudeen-islamic-arabic-school-oshodi-campus-oshodi": {
+    "email": "akinwunmiabdullateef@rocketmail.com",
+    "confidence": 0.35,
+    "evidence_append": "Checked in-browser 2026-07-23: page dormant (~11-year-old alumni posts), 34 followers, no address; current operation unconfirmed — needs local knowledge"
+  },
+  "qudratullahi-international-schools-abule-egba": {
+    "address": "10 Sunmonu Laloku, Abule Egba",
+    "email": "qislagos@gmail.com",
+    "confidence": 0.7,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: address/email on page, termly Qur'an competitions 2023-2024 confirm Islamic primary program"
+  },
+  "start-well-western-and-tahfeez-school-ikorodu": {
+    "confidence": 0.5,
+    "evidence_append": "Checked in-browser 2026-07-23: page live, 306 followers, bio confirms tahfeez+western identity ('we produce great Hufaz'); no address published — Ikorodu placement still from search snippet only"
+  },
+  "ilead-college-ikorodu-ebute": {
+    "confidence": 0.4,
+    "evidence_append": "Checked in-browser 2026-07-23: FB page unavailable (deleted/restricted); needs another source or local knowledge"
+  },
+  "al-ameen-muslim-private-school-abule-egba": {
+    "confidence": 0.4,
+    "evidence_append": "Checked in-browser 2026-07-23: FB page unavailable (deleted/restricted); needs another source or local knowledge"
+  },
+  "darul-arabiyyah-schools": {
+    "address": "7, Adesoye Hassan Street, Epe",
+    "area": "Epe",
+    "city": "Lagos",
+    "phone": "0816 472 2740",
+    "email": "intellectahorizonschools@gmail.com",
+    "confidence": 0.65,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: address/phone on page, school-event posts, parent comment 'the best school in epe'; note contact email says 'intellectahorizonschools' — possibly affiliated/renamed entity"
+  },
+  "access-islamic-academy": {
+    "address": "1 Omodeinde Street, off Morcas Road, Agege",
+    "area": "Agege",
+    "city": "Lagos",
+    "phone": "0703 485 8160",
+    "email": "accessislamicacad@yahoo.com",
+    "confidence": 0.6,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 996 followers, address/phone/email on page; FB category 'Educational Research Center' — reviewer should confirm it runs a K-12/tahfeez program"
+  },
+  "al-mawrid-academy-kosofe": {
+    "address": "18, Oluwalogbon Street, Ikosi-Ketu",
+    "area": "Ikosi-Ketu (Kosofe)",
+    "description": "Islamic school in Kosofe offering Creche, Nursery, Primary and Secondary education with a Tahfidh program.",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: IG bio 'TOP ISLAMIC SCHOOL IN KOSOFE', 95 posts, address in bio (page spells it 'Oluwalpgbon'/'Ikos-Ketu' — corrected here)"
+  },
+  "muslim-teacher-s-college-surulere": {
+    "address": "82 Randle Avenue, Surulere",
+    "phone": "0802 781 7071",
+    "confidence": 0.45,
+    "evidence_append": "Checked in-browser 2026-07-23: address/phone on page, but the page is run by the old students' association and dormant since ~2017; institution exists, current form (public college?) unconfirmed"
+  },
+  "nawair-ud-deen-private-school-oshodi": {
+    "website": "https://nawairuddeenprivateschool.org.ng",
+    "confidence": 0.5,
+    "evidence_append": "Checked in-browser 2026-07-23: bio confirms Islamic identity ('supported with Islamic teachings') but page has no posts/address, and the school's own domain fails DNS — location still unconfirmed"
+  },
+  "usoolul-iman-tahfeez-school-agege": {
+    "address": "29, Adebanjo Street, Off Balogun Ilawe, Dopemu, Agege",
+    "evidence_append": "Enriched from FB page card in-session 2026-07-23: 2.3K followers, 100% recommend, address shown; actively hiring"
+  },
+  "ahlussunnah-mosque-and-islamic-school-ebute-metta-ebute-metta-east-yaba": {
+    "address": "Macculum Street, Ebute-Metta",
+    "evidence_append": "Enriched from FB page card in-session 2026-07-23: 'General Madrasa of Tahfeez, Islamiyyah and Women Section', 553 followers, Macculum Street shown as address"
+  }
+}

@@ -11,8 +11,10 @@
 
 import { existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
+import { resolve as resolvePath } from 'path';
 import {
   CANDIDATES_JSON,
+  DATA_DIR,
   RAW_DIR,
   nameSimilarity,
   readJson,
@@ -161,6 +163,30 @@ function main() {
       }
     }
     console.log(`📄 ${file}: ${raw.length} rows → ${ok} new candidates`);
+  }
+
+  // Verification results (in-browser checks of social-surfaced rows, reviewer
+  // corrections) live in data/verified-overrides.json keyed by candidate id —
+  // raw/ stays pristine agent output, and overrides survive re-runs.
+  // Special key "evidence_append" appends to evidence instead of replacing.
+  const overridesPath = resolvePath(DATA_DIR, 'verified-overrides.json');
+  try {
+    const overrides =
+      readJson<Record<string, Record<string, unknown>>>(overridesPath);
+    let applied = 0;
+    for (const c of candidates) {
+      const o = overrides[c.id];
+      if (!o) continue;
+      const { evidence_append, ...fields } = o;
+      Object.assign(c, fields);
+      if (typeof evidence_append === 'string') {
+        c.evidence = c.evidence ? `${c.evidence}; ${evidence_append}` : evidence_append;
+      }
+      applied++;
+    }
+    if (applied) console.log(`🔎 ${applied} verified overrides applied`);
+  } catch {
+    // no overrides file — fine
   }
 
   // Re-runs must not wipe later-stage results: carry over geocode/dedupe
