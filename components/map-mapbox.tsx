@@ -26,7 +26,6 @@ const accessToken =
   (Constants.expoConfig?.extra as { mapboxAccessToken?: string } | undefined)
     ?.mapboxAccessToken ?? null;
 void Mapbox.setAccessToken(accessToken);
-Mapbox.setTelemetryEnabled(false);
 
 const STYLE_URL = 'mapbox://styles/mapbox/light-v11';
 const GREEN = '#12664F';

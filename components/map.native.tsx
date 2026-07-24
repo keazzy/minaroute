@@ -29,10 +29,14 @@ type MapModule = {
   Marker: (props: MarkerProps) => null;
 };
 
+// require() so only the active implementation's module (and native dependency)
+// is ever loaded — see the header comment.
 const impl: MapModule =
   process.env.EXPO_PUBLIC_MAP_IMPL === 'legacy'
-    ? require('./map-legacy')
-    : require('./map-mapbox');
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('./map-legacy')
+    : // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('./map-mapbox');
 
 export const Marker = impl.Marker;
 export default impl.default;

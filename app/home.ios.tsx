@@ -2,6 +2,8 @@
 import EventDetailsContent from '@/components/event-details-content';
 import { Glass } from '@/components/Glass';
 import { HomeSheetContent } from '@/components/HomeSheetContent';
+import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
+import { placesInBounds, useSearchThisArea } from '@/hooks/use-search-this-area';
 import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
 import { Location } from '@/constants/mockData';
@@ -17,7 +19,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActionSheetIOS, Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapViewHandle } from '../components/map';
+import type { MapBounds, MapViewHandle } from '../components/map';
 import MapView, { Marker, PROVIDER_DEFAULT } from '../components/map';
 
 const INITIAL_REGION = {
@@ -155,6 +157,13 @@ export default function HomeScreen() {
   const [homeSheetReady, setHomeSheetReady] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
+  const [areaBounds, setAreaBounds] = useState<MapBounds | null>(null);
+  const {
+    visible: searchAreaVisible,
+    onCameraIdle: handleCameraIdle,
+    markSearched: markAreaSearched,
+    reset: resetSearchArea,
+  } = useSearchThisArea();
 
   const snapPoints = useMemo(() => {
     const collapsed = Math.max(280, windowHeight * 0.45);
@@ -188,6 +197,8 @@ export default function HomeScreen() {
         accuracy: ExpoLocation.Accuracy.Balanced,
       });
       setUserCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      setAreaBounds(null);
+      resetSearchArea();
       mapRef.current?.animateToRegion({
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
@@ -197,7 +208,7 @@ export default function HomeScreen() {
     } catch {
       // ignore
     }
-  }, []);
+  }, [resetSearchArea]);
 
   const requestForegroundPermission = useCallback(async () => {
     try {
@@ -536,6 +547,24 @@ export default function HomeScreen() {
       .map((x) => x.place);
   }, [locationPermissionStatus, places, userCoords]);
 
+  // "Search this area": once the user consumes a panned-to viewport, the sheet
+  // lists that area (sorted from its center) instead of the near-me radius.
+  const sheetPlaces = useMemo(() => {
+    if (!areaBounds) return nearbyPlaces;
+    const center = {
+      latitude: (areaBounds.north + areaBounds.south) / 2,
+      longitude: (areaBounds.east + areaBounds.west) / 2,
+    };
+    return placesInBounds(places, areaBounds).sort(
+      (a, b) => haversineKm(center, a.coordinate) - haversineKm(center, b.coordinate),
+    );
+  }, [areaBounds, nearbyPlaces, places]);
+
+  const handleSearchThisArea = useCallback(() => {
+    const idle = markAreaSearched();
+    if (idle) setAreaBounds(idle.bounds);
+  }, [markAreaSearched]);
+
   // Handler for category press from SwiftUI HomeSheetContent
   const handleCategoryPress = useCallback((categoryName: string) => {
     openSearchResults({ category: categoryName });
@@ -543,11 +572,11 @@ export default function HomeScreen() {
 
   // Handler for place press from SwiftUI HomeSheetContent
   const handlePlacePress = useCallback((place: { id: string }) => {
-    const fullPlace = nearbyPlaces.find(p => p.id === place.id);
+    const fullPlace = sheetPlaces.find(p => p.id === place.id);
     if (fullPlace) {
       handleLocationItemPress(fullPlace);
     }
-  }, [nearbyPlaces]);
+  }, [sheetPlaces]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -559,6 +588,7 @@ export default function HomeScreen() {
         showsUserLocation={locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED}
         showsMyLocationButton={false}
         onCameraMove={(event) => setMapBearing(event.bearing)}
+        onCameraIdle={handleCameraIdle}
       >
         {places.map((location) => (
           <Marker
@@ -566,6 +596,8 @@ export default function HomeScreen() {
             coordinate={location.coordinate}
             title={location.name}
             description={location.type}
+            category={location.type}
+            selected={selectedLocationId === location.id}
             onPress={() => handleLocationItemPress(location)}
             pinColor={selectedLocationId === location.id ? Colors.light.tint : 'red'}
           />
@@ -659,6 +691,8 @@ export default function HomeScreen() {
             }
           ]}
           onPress={() => {
+            setAreaBounds(null);
+            resetSearchArea();
             mapRef.current?.animateToRegion({
               latitude: userCoords.latitude,
               longitude: userCoords.longitude,
@@ -667,6 +701,7 @@ export default function HomeScreen() {
             });
           }}
           activeOpacity={0.8}
+          testID="recenter-button"
         >
           <Glass style={styles.mapControlButtonGlass} glassStyle="regular">
             <SymbolView
@@ -677,6 +712,13 @@ export default function HomeScreen() {
           </Glass>
         </TouchableOpacity>
       )}
+
+      {/* "Search this area" pill — appears after panning away, above the collapsed sheet */}
+      <SearchThisAreaButton
+        visible={searchAreaVisible}
+        onPress={handleSearchThisArea}
+        style={{ bottom: snapPoints[0] + 12 }}
+      />
 
       {/* Home Sheet with pure SwiftUI content */}
       <NativeSheet
@@ -690,7 +732,7 @@ export default function HomeScreen() {
         topInset={insets.top}
       >
         <HomeSheetContent
-          places={nearbyPlaces.map(p => ({
+          places={sheetPlaces.map(p => ({
             id: p.id,
             name: p.name,
             address: p.address || '',

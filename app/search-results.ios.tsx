@@ -1,7 +1,9 @@
 import EventDetailsContent from '@/components/event-details-content';
-import type { MapViewHandle } from '@/components/map';
-import MapView, { Marker, PROVIDER_DEFAULT } from '@/components/map';
+import type { MapBounds, MapViewHandle } from '@/components/map';
+import MapView, { isPointInBounds, Marker, PROVIDER_DEFAULT } from '@/components/map';
 import { NativeSheet, type NativeSheetRef } from '@/components/NativeSheet';
+import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
+import { useSearchThisArea } from '@/hooks/use-search-this-area';
 import PlaceCard from '@/components/place-card';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -279,6 +281,13 @@ export default function SearchResultsScreen() {
   // Sheet state - tracks if sheet is collapsed (showing map) or expanded (full list)
   const [isSheetExpanded, setIsSheetExpanded] = useState(true); // Start expanded (full list view)
   const [selectedMarkerPlace, setSelectedMarkerPlace] = useState<Place | null>(null);
+  const [areaBounds, setAreaBounds] = useState<MapBounds | null>(null);
+  const {
+    visible: searchAreaVisible,
+    onCameraIdle: handleCameraIdle,
+    markSearched: markAreaSearched,
+    reset: resetSearchArea,
+  } = useSearchThisArea();
   const mapRef = useRef<MapViewHandle>(null);
   const sheetAnim = useRef(new Animated.Value(1)).current; // 1 = expanded, 0 = collapsed
   
@@ -637,6 +646,28 @@ export default function SearchResultsScreen() {
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [amenityFilter, events, initialCategory, nearMe, places, searchText, selectedTags, typeFilter, userCoords]);
 
+  // A fresh search/filter forgets any "search this area" viewport.
+  useEffect(() => {
+    setAreaBounds(null);
+    resetSearchArea();
+  }, [amenityFilter, initialCategory, nearMe, resetSearchArea, searchText, selectedTags, typeFilter]);
+
+  // "Search this area": narrows the result list to the consumed viewport. The
+  // pins stay as-is (off-viewport pins aren't visible anyway) and the camera
+  // fit keeps using the unfiltered set so consuming an area never moves it.
+  const displayedPlaces = useMemo(() => {
+    if (!areaBounds) return filteredPlaces;
+    return filteredPlaces.filter((p) => {
+      const coord = (p as Place).coordinate;
+      return coord != null && isPointInBounds(coord, areaBounds);
+    });
+  }, [areaBounds, filteredPlaces]);
+
+  const handleSearchThisArea = useCallback(() => {
+    const idle = markAreaSearched();
+    if (idle) setAreaBounds(idle.bounds);
+  }, [markAreaSearched]);
+
   // Filter places that have coordinates for map view
   const mappablePlaces = useMemo(() => {
     return filteredPlaces.filter((p): p is Place => {
@@ -867,6 +898,7 @@ export default function SearchResultsScreen() {
         provider={PROVIDER_DEFAULT}
         initialRegion={mapRegion}
         showsUserLocation={nearMePermissionStatus === ExpoLocation.PermissionStatus.GRANTED}
+        onCameraIdle={handleCameraIdle}
       >
         {mappablePlaces.map((place) => (
           <Marker
@@ -874,6 +906,8 @@ export default function SearchResultsScreen() {
             coordinate={place.coordinate}
             title={place.name}
             description={place.type}
+            category={place.type}
+            selected={selectedMarkerPlace?.id === place.id}
             onPress={() => handleMarkerPress(place)}
             pinColor={selectedMarkerPlace?.id === place.id ? Colors.light.tint : 'red'}
           />
@@ -931,7 +965,7 @@ export default function SearchResultsScreen() {
           <View style={styles.resultsHeader}>
             <Text style={[styles.resultsHeaderText, { color: dynamicColors.textSecondary }]}>
               <Text>Showing you </Text>
-              <Text style={[styles.resultsHeaderBold, { color: dynamicColors.text }]}>{filteredPlaces.length} {filteredPlaces.length === 1 ? 'result' : 'results'}</Text>
+              <Text style={[styles.resultsHeaderBold, { color: dynamicColors.text }]}>{displayedPlaces.length} {displayedPlaces.length === 1 ? 'result' : 'results'}</Text>
               <Text> for </Text>
               <Text style={[styles.resultsHeaderBold, { color: dynamicColors.text }]}>{shownQueryLabel}</Text>
             </Text>
@@ -990,6 +1024,8 @@ export default function SearchResultsScreen() {
         <TouchableOpacity
           style={styles.locationButton}
           onPress={() => {
+            setAreaBounds(null);
+            resetSearchArea();
             mapRef.current?.animateToRegion({
               latitude: userCoords.latitude,
               longitude: userCoords.longitude,
@@ -998,6 +1034,7 @@ export default function SearchResultsScreen() {
             });
           }}
           activeOpacity={0.8}
+          testID="recenter-button"
         >
           <View style={styles.locationButtonInner}>
             <SymbolView
@@ -1008,6 +1045,13 @@ export default function SearchResultsScreen() {
           </View>
         </TouchableOpacity>
       )}
+
+      {/* "Search this area" pill — map mode only, floats above the collapsed sheet */}
+      <SearchThisAreaButton
+        visible={searchAreaVisible && !isSheetExpanded}
+        onPress={handleSearchThisArea}
+        style={{ top: collapsedSheetTop - 64 }}
+      />
 
       {/* Map button - fades with sheet animation */}
       <Animated.View 
@@ -1103,7 +1147,7 @@ export default function SearchResultsScreen() {
                 <Text style={styles.listStateButtonText}>Open Settings</Text>
               </TouchableOpacity>
             </View>
-          ) : filteredPlaces.length === 0 ? (
+          ) : displayedPlaces.length === 0 ? (
             <View style={styles.sheetEmptyState}>
               <Text style={[styles.listStateTitle, { color: dynamicColors.text }]}>No results found.</Text>
               {(selectedTags.length > 0 || typeFilter !== 'All') && (
@@ -1118,7 +1162,7 @@ export default function SearchResultsScreen() {
               )}
             </View>
           ) : (
-            filteredPlaces.map((place) => (
+            displayedPlaces.map((place) => (
               <View key={place.id}>
                 {renderCard(place)}
               </View>
