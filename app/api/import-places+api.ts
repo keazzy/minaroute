@@ -36,7 +36,7 @@ interface ImportRequest {
   latitude: number;
   longitude: number;
   radiusMeters: number;
-  category: string; // 'Mosque', 'School', etc.
+  category: string; // canonical lowercase slug: 'mosque', 'school', etc.
 }
 
 interface ImportResponse {
@@ -217,7 +217,7 @@ export async function POST(request: Request): Promise<Response> {
 
       allPlaces.set(place.id, {
         name: place.displayName?.text || `Unknown ${category}`,
-        category,
+        category: category.toLowerCase(),
         address: place.formattedAddress || null,
         city,
         state,

@@ -1,10 +1,21 @@
 export interface Category {
   id: string;
   name: string;
+  slug: string; // canonical lowercase value stored in the DB (places/suggestions.category)
   icon: string; // Emoji fallback
   image?: any; // require() image for card background
   color: string;
   textColor?: string; // Text color, defaults to white
+}
+
+/** Display name (or free text) → canonical DB category slug. */
+export function toCategorySlug(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  const match = CATEGORIES.find(
+    (c) => c.name.toLowerCase() === trimmed.toLowerCase() || c.slug === trimmed.toLowerCase(),
+  );
+  return match ? match.slug : trimmed.toLowerCase().replace(/\s+/g, '_');
 }
 
 export interface Location {
@@ -32,6 +43,7 @@ export const CATEGORIES: Category[] = [
   {
     id: '1',
     name: 'Mosques',
+    slug: 'mosque',
     icon: '🕌',
     image: CATEGORY_IMAGES.mosque,
     color: '#59B56C',
@@ -39,6 +51,7 @@ export const CATEGORIES: Category[] = [
   {
     id: '2',
     name: 'Islamic Schools',
+    slug: 'school',
     icon: '📚',
     image: CATEGORY_IMAGES.school,
     color: '#8252A8',
@@ -46,6 +59,7 @@ export const CATEGORIES: Category[] = [
   {
     id: '3',
     name: 'Events',
+    slug: 'event',
     icon: '📅',
     image: CATEGORY_IMAGES.event,
     color: '#FFA441',
@@ -54,6 +68,7 @@ export const CATEGORIES: Category[] = [
   {
     id: '4',
     name: 'Halal Food',
+    slug: 'halal_food',
     icon: '🍲',
     color: '#E67E22',
   },

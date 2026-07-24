@@ -1,0 +1,482 @@
+{
+  "sibaam-golden-school-baruwa-ipaja-ayobo-axis": {
+    "lat": 6.605865,
+    "lng": 3.264367,
+    "geocode_status": "manual",
+    "evidence_append": "Coords hand-pinned to the Ipaja Road corridor anchor (Nominatim mismatched a Baruwa Street in Mushin; school confirmed in Baruwa via user + Google listing). geocode --retry must not overwrite"
+  },
+  "khalifet-islamic-school-lagos-island": {
+    "address": "26 Glover Street, Lagos Island",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23 (reviewer's session): page live, est. 2007, address on page, 5 reviews 100% recommend, recent Islamic-calendar posts"
+  },
+  "iqrah-international-schools-ojo-iba": {
+    "address": "113, Aratumi Ishasi Road, Iba New Site, Ojo",
+    "phone": "+2348037191999",
+    "email": "info@iqrahschools.com",
+    "website": "https://iqrahschools.com",
+    "confidence": 0.85,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 'Private Muslim Co-Educational Secondary School', 2.7K followers, active; featured post also cites Lanre Mabawonku Street, Iba New Site"
+  },
+  "crest-islamic-international-school-ikorodu-ibeshe": {
+    "phone": "+234 805 459 7222, +234 903 434 6392",
+    "email": "info@crestislamicschool.com",
+    "image_url": "https://crestislamicschool.com/wp-content/uploads/2023/10/ciis-logo.jpg",
+    "source_url": "https://crestislamicschool.com/",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "FB page unavailable 2026-07-23, but own website live (content through 2024): Nigerian+international curricula with full Qur'an memorization; address and contacts from site"
+  },
+  "al-baraka-international-schools": {
+    "address": "65a, Oshundairo Street, Off Araromi Bus Stop, Iyana-Ipaja",
+    "area": "Iyana-Ipaja (Alimosho)",
+    "phone": "0803 358 7595",
+    "email": "albarakaschool1996@gmail.com",
+    "social_handle": "@albarakaschools",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Iyana-Ipaja (Alimosho suburb (nominatim)) anchor by audit 2026-07-24 (was 22.3km off)",
+    "lat": 6.6113,
+    "lng": 3.2953,
+    "geocode_status": "manual"
+  },
+  "gifted-islamic-school": {
+    "name": "Gifted Islamic Academy (GIFTS)",
+    "address": "20A Muyibat Oyefusi Crescent, Omole Phase 1, Ikeja",
+    "area": "Omole Phase 1 (Ikeja)",
+    "city": "Lagos",
+    "phone": "+2347030210008",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Ikeja (20/23 mosque refs) anchor by audit 2026-07-24 (was 4.6km off)",
+    "lat": 6.59768,
+    "lng": 3.342099,
+    "geocode_status": "manual"
+  },
+  "al-muhajiroon-school-ikorodu": {
+    "address": "16, Abiodun Aguda Way, Omitoro, Ikorodu",
+    "confidence": 0.6,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 5.2km off)",
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual"
+  },
+  "albushra-academy-for-quran-memorization-and-islamic-studies-epe": {
+    "address": "London Road, Iragunshin, Epe",
+    "email": "albushrahacademy@gmail.com",
+    "website": "https://albushraacademy.com",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Epe (2/5 mosque refs) anchor by audit 2026-07-24 (was 21.0km off)",
+    "lat": 6.437997,
+    "lng": 3.512515,
+    "geocode_status": "manual"
+  },
+  "darul-islam-schools-mushin": {
+    "address": "Old 19, Folami Street, Idi-Oro, Mushin",
+    "phone": "0802 343 5582",
+    "email": "islamdarul@yahoo.co.uk",
+    "confidence": 0.65,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Mushin (nominatim administrative) anchor by audit 2026-07-24 (was 6.2km off)",
+    "lat": 6.524765,
+    "lng": 3.351635,
+    "geocode_status": "manual"
+  },
+  "penckers-school-isolo": {
+    "address": "1 Addawat Close, off Adebisi Omotola, Isolo",
+    "website": "https://penckersschool.com",
+    "confidence": 0.8,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Isolo (4/4 mosque refs) anchor by audit 2026-07-24 (was 14.2km off)",
+    "lat": 6.536671,
+    "lng": 3.310661,
+    "geocode_status": "manual"
+  },
+  "modrasat-nosirudeen-islamic-arabic-school-oshodi-campus-oshodi": {
+    "email": "akinwunmiabdullateef@rocketmail.com",
+    "confidence": 0.35,
+    "evidence_append": "Checked in-browser 2026-07-23: page dormant (~11-year-old alumni posts), 34 followers, no address; current operation unconfirmed \u2014 needs local knowledge"
+  },
+  "qudratullahi-international-schools-abule-egba": {
+    "address": "10 Sunmonu Laloku, Abule Egba",
+    "email": "qislagos@gmail.com",
+    "confidence": 0.7,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Abule Egba (nominatim suburb) anchor by audit 2026-07-24 (was 5.1km off)",
+    "lat": 6.647894,
+    "lng": 3.304622,
+    "geocode_status": "manual"
+  },
+  "start-well-western-and-tahfeez-school-ikorodu": {
+    "confidence": 0.5,
+    "evidence_append": "Checked in-browser 2026-07-23: page live, 306 followers, bio confirms tahfeez+western identity ('we produce great Hufaz'); no address published \u2014 Ikorodu placement still from search snippet only"
+  },
+  "ilead-college-ikorodu-ebute": {
+    "confidence": 0.4,
+    "evidence_append": "Checked in-browser 2026-07-23: FB page unavailable (deleted/restricted); needs another source or local knowledge"
+  },
+  "al-ameen-muslim-private-school-abule-egba": {
+    "confidence": 0.4,
+    "evidence_append": "Checked in-browser 2026-07-23: FB page unavailable (deleted/restricted); needs another source or local knowledge"
+  },
+  "darul-arabiyyah-schools": {
+    "address": "7, Adesoye Hassan Street, Epe",
+    "area": "Epe",
+    "city": "Lagos",
+    "phone": "0816 472 2740",
+    "email": "intellectahorizonschools@gmail.com",
+    "confidence": 0.65,
+    "needs_verification": false,
+    "evidence_append": "coords snapped to Epe (2/5 mosque refs) anchor by audit 2026-07-24 (was 21.0km off)",
+    "lat": 6.437997,
+    "lng": 3.512515,
+    "geocode_status": "manual"
+  },
+  "access-islamic-academy": {
+    "address": "1 Omodeinde Street, off Morcas Road, Agege",
+    "area": "Agege",
+    "city": "Lagos",
+    "phone": "0703 485 8160",
+    "email": "accessislamicacad@yahoo.com",
+    "confidence": 0.6,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: 996 followers, address/phone/email on page; FB category 'Educational Research Center' \u2014 reviewer should confirm it runs a K-12/tahfeez program"
+  },
+  "al-mawrid-academy-kosofe": {
+    "address": "18, Oluwalogbon Street, Ikosi-Ketu",
+    "area": "Ikosi-Ketu (Kosofe)",
+    "description": "Islamic school in Kosofe offering Creche, Nursery, Primary and Secondary education with a Tahfidh program.",
+    "confidence": 0.75,
+    "needs_verification": false,
+    "evidence_append": "Verified in-browser 2026-07-23: IG bio 'TOP ISLAMIC SCHOOL IN KOSOFE', 95 posts, address in bio (page spells it 'Oluwalpgbon'/'Ikos-Ketu' \u2014 corrected here)"
+  },
+  "muslim-teacher-s-college-surulere": {
+    "address": "82 Randle Avenue, Surulere",
+    "phone": "0802 781 7071",
+    "confidence": 0.45,
+    "evidence_append": "Checked in-browser 2026-07-23: address/phone on page, but the page is run by the old students' association and dormant since ~2017; institution exists, current form (public college?) unconfirmed"
+  },
+  "nawair-ud-deen-private-school-oshodi": {
+    "website": "https://nawairuddeenprivateschool.org.ng",
+    "confidence": 0.5,
+    "evidence_append": "Checked in-browser 2026-07-23: bio confirms Islamic identity ('supported with Islamic teachings') but page has no posts/address, and the school's own domain fails DNS \u2014 location still unconfirmed"
+  },
+  "usoolul-iman-tahfeez-school-agege": {
+    "address": "29, Adebanjo Street, Off Balogun Ilawe, Dopemu, Agege",
+    "evidence_append": "Enriched from FB page card in-session 2026-07-23: 2.3K followers, 100% recommend, address shown; actively hiring"
+  },
+  "ahlussunnah-mosque-and-islamic-school-ebute-metta-ebute-metta-east-yaba": {
+    "address": "Macculum Street, Ebute-Metta",
+    "evidence_append": "Enriched from FB page card in-session 2026-07-23: 'General Madrasa of Tahfeez, Islamiyyah and Women Section', 553 followers, Macculum Street shown as address"
+  },
+  "ansar-ud-deen-society-senior-grammar-school-badagry-badagry": {
+    "lat": 6.439322,
+    "lng": 2.906032,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Badagry (nominatim administrative) anchor by audit 2026-07-24 (was 66.6km off)"
+  },
+  "ansar-ud-deen-primary-school-odo-egiri-epe-epe": {
+    "lat": 6.437997,
+    "lng": 3.512515,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Epe (2/5 mosque refs) anchor by audit 2026-07-24 (was 25.8km off)"
+  },
+  "muslim-community-nursery-primary-school-ipaja-alimosho": {
+    "lat": 6.6059,
+    "lng": 3.2644,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ipaja (Ipaja Road corridor (nominatim)) anchor by audit 2026-07-24 (was 25.7km off)"
+  },
+  "almawaf-schools-ipaja-alimosho": {
+    "lat": 6.6059,
+    "lng": 3.2644,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ipaja (Ipaja Road corridor (nominatim)) anchor by audit 2026-07-24 (was 25.7km off)"
+  },
+  "jamaatul-islamiyah-primary-school-sabo-ikorodu-sabo-ikorodu-lga": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 23.7km off)"
+  },
+  "daarul-bayyinah-schools-ikorodu": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 23.7km off)"
+  },
+  "as-saadah-nursery-and-primary-school-ekoro-abule-egba": {
+    "lat": 6.647894,
+    "lng": 3.304622,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Abule-Egba (nominatim suburb) anchor by audit 2026-07-24 (was 23.4km off)"
+  },
+  "nuds-zonal-comprehensive-school-owutu-ikorodu-owutu-ikorodu": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 22.7km off)"
+  },
+  "zumratul-islamiyyah-primary-school-odogunyan-ikorodu-odogunyan-ikorodu-lga": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 22.7km off)"
+  },
+  "al-iman-nursery-and-primary-school-akinola-iyana-ipaja": {
+    "lat": 6.6113,
+    "lng": 3.2953,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Iyana-Ipaja (Alimosho suburb (nominatim)) anchor by audit 2026-07-24 (was 21.2km off)"
+  },
+  "al-minaaj-schools-epe-epe": {
+    "lat": 6.437997,
+    "lng": 3.512515,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Epe (2/5 mosque refs) anchor by audit 2026-07-24 (was 21.0km off)"
+  },
+  "thaqafatu-islamiyyah-college-mebamu-badagry-expressway-ojo-badagry-axis": {
+    "lat": 6.462497,
+    "lng": 3.16571,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ojo (nominatim administrative) anchor by audit 2026-07-24 (was 20.7km off)"
+  },
+  "tender-sprouts-school-ajah-ajiwe-eti-osa": {
+    "lat": 6.488921,
+    "lng": 3.617533,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ajah (3/4 mosque refs) anchor by audit 2026-07-24 (was 20.7km off)"
+  },
+  "earnest-schools-megida-ayobo": {
+    "lat": 6.6064,
+    "lng": 3.2349,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ayobo (Ayobo PHC (nominatim)) anchor by audit 2026-07-24 (was 20.6km off)"
+  },
+  "al-murtado-schools-aboru-iyana-ipaja": {
+    "lat": 6.6113,
+    "lng": 3.2953,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Iyana-Ipaja (Alimosho suburb (nominatim)) anchor by audit 2026-07-24 (was 20.4km off)"
+  },
+  "ikhwan-schools-oshodi-oshodi-isolo": {
+    "lat": 6.557931,
+    "lng": 3.335185,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Oshodi (15/16 mosque refs) anchor by audit 2026-07-24 (was 20.0km off)"
+  },
+  "lekki-qur-an-memorisation-college-lekki-eti-osa": {
+    "lat": 6.438122,
+    "lng": 3.514227,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Lekki (8/16 mosque refs) anchor by audit 2026-07-24 (was 18.1km off)"
+  },
+  "ilham-nursery-and-primary-school-oko-oba-agege-abule-egba-border": {
+    "lat": 6.65015,
+    "lng": 3.319374,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Oko-Oba (nominatim retail) anchor by audit 2026-07-24 (was 18.0km off)"
+  },
+  "mordiyah-college-aboru-iyana-ipaja-alimosho": {
+    "lat": 6.6113,
+    "lng": 3.2953,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Iyana-Ipaja (Alimosho suburb (nominatim)) anchor by audit 2026-07-24 (was 16.8km off)"
+  },
+  "flowers-and-heart-nursery-and-primary-school-abule-egba": {
+    "lat": 6.647894,
+    "lng": 3.304622,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Abule-Egba (nominatim suburb) anchor by audit 2026-07-24 (was 16.8km off)"
+  },
+  "ansar-ud-deen-academy-surulere-surulere": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "the-outliers-school-surulere": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "alhaleem-international-schools-surulere-ijeshatedo": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "al-haleem-int-l-schools-surulere": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "al-furqaan-schools-lagos-surulere-ojuelegba": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "man-nursery-primary-school-surulere-surulere": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 15.9km off)"
+  },
+  "ansar-ud-deen-college-isolo-isolo-oshodi-isolo": {
+    "lat": 6.536671,
+    "lng": 3.310661,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Isolo (4/4 mosque refs) anchor by audit 2026-07-24 (was 14.2km off)"
+  },
+  "soundhope-international-muslim-academy-soundhope-schools-baruwa-ipaja": {
+    "lat": 6.6059,
+    "lng": 3.2644,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Baruwa (Ipaja Road corridor (nominatim)) anchor by audit 2026-07-24 (was 14.0km off)"
+  },
+  "lemu-institute-of-arabic-and-islamic-studies-lekki-eti-osa": {
+    "lat": 6.438122,
+    "lng": 3.514227,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Lekki (8/16 mosque refs) anchor by audit 2026-07-24 (was 13.9km off)"
+  },
+  "imaad-schools-lekki-agungi-lekki-eti-osa": {
+    "lat": 6.438122,
+    "lng": 3.514227,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Lekki (8/16 mosque refs) anchor by audit 2026-07-24 (was 13.9km off)"
+  },
+  "excelsior-islamic-schools-amuwo-odofin": {
+    "lat": 6.447057,
+    "lng": 3.266316,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Amuwo Odofin (nominatim administrative) anchor by audit 2026-07-24 (was 13.7km off)"
+  },
+  "iman-comprehensive-college-amuwo-odofin": {
+    "lat": 6.447057,
+    "lng": 3.266316,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Amuwo-Odofin (nominatim administrative) anchor by audit 2026-07-24 (was 13.0km off)"
+  },
+  "ansar-ud-deen-primary-school-ibonwon-epe-eredo-epe": {
+    "lat": 6.437997,
+    "lng": 3.512515,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Epe (2/5 mosque refs) anchor by audit 2026-07-24 (was 12.7km off)"
+  },
+  "markaz-ul-uloom-school-of-arabic-islamic-studies-alagbado-agege": {
+    "lat": 6.625252,
+    "lng": 3.31121,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Agege (nominatim administrative) anchor by audit 2026-07-24 (was 11.5km off)"
+  },
+  "zumratul-islamiyyah-primary-school-lagos-island-lagos-island": {
+    "lat": 6.455769,
+    "lng": 3.389297,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Lagos Island (11/11 mosque refs) anchor by audit 2026-07-24 (was 10.7km off)"
+  },
+  "happy-home-international-islamic-academy-agege": {
+    "lat": 6.625252,
+    "lng": 3.31121,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Agege (nominatim administrative) anchor by audit 2026-07-24 (was 10.4km off)"
+  },
+  "toyibat-group-of-schools-gbagada-shomolu-kosofe-axis": {
+    "lat": 6.592687,
+    "lng": 3.399986,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Kosofe (3/4 mosque refs) anchor by audit 2026-07-24 (was 10.2km off)"
+  },
+  "lekki-muslim-ummah-group-of-schools-lekki-phase-1-eti-osa": {
+    "lat": 6.438122,
+    "lng": 3.514227,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Lekki (8/16 mosque refs) anchor by audit 2026-07-24 (was 9.9km off)"
+  },
+  "ansar-ud-deen-nursery-and-primary-school-bariga-bariga-shomolu": {
+    "lat": 6.535,
+    "lng": 3.394722,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Bariga (nominatim suburb) anchor by audit 2026-07-24 (was 6.3km off)"
+  },
+  "an-nur-nursery-primary-school-bariga-bariga-shomolu": {
+    "lat": 6.535,
+    "lng": 3.394722,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Bariga (nominatim suburb) anchor by audit 2026-07-24 (was 6.2km off)"
+  },
+  "ansar-ud-deen-nursery-and-primary-school-ebute-metta-ebute-metta-east-yaba": {
+    "lat": 6.50731,
+    "lng": 3.377769,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Yaba (12/12 mosque refs) anchor by audit 2026-07-24 (was 6.1km off)"
+  },
+  "balala-muslim-boarding-school-abule-egba": {
+    "lat": 6.647894,
+    "lng": 3.304622,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Abule Egba (nominatim suburb) anchor by audit 2026-07-24 (was 5.1km off)"
+  },
+  "rahmaniyah-private-school-agege-oko-oba": {
+    "lat": 6.625252,
+    "lng": 3.31121,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Agege (nominatim administrative) anchor by audit 2026-07-24 (was 4.9km off)"
+  },
+  "balad-private-schools-ikorodu": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 4.0km off)"
+  },
+  "raodat-arabic-school-ikorodu": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 3.7km off)"
+  },
+  "talim-ul-islam-ahmadiyya-primary-school-ebute-metta-ebute-metta-lagos-mainland-l": {
+    "lat": 6.486255,
+    "lng": 3.385612,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ebute Metta (nominatim suburb) anchor by audit 2026-07-24 (was 3.6km off)"
+  },
+  "aamco-schools-apapa-araromi-apapa": {
+    "lat": 6.479357,
+    "lng": 3.395343,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Araromi (2/2 mosque refs) anchor by audit 2026-07-24 (was 3.5km off)"
+  },
+  "ansar-ud-deen-girls-high-school-itire-itire-surulere-axis": {
+    "lat": 6.496697,
+    "lng": 3.363461,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Surulere (2/2 mosque refs) anchor by audit 2026-07-24 (was 3.5km off)"
+  },
+  "madrasatu-khadeejata-binti-khuwaylid-ikoyi-dolphin-estate": {
+    "lat": 6.445113,
+    "lng": 3.428637,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikoyi (5/5 mosque refs) anchor by audit 2026-07-24 (was 3.1km off)"
+  },
+  "manaar-schools-ikorodu-igbe": {
+    "lat": 6.622794,
+    "lng": 3.505656,
+    "geocode_status": "manual",
+    "evidence_append": "coords snapped to Ikorodu (16/39 mosque refs) anchor by audit 2026-07-24 (was 3.0km off)"
+  },
+  "the-jannah-sprouts-school-gowon-estate-iyana-ipaja": {
+    "lat": 6.6113,
+    "lng": 3.2953,
+    "geocode_status": "manual",
+    "evidence_append": "coords corrected to Gowon Estate area anchor (owner-reported: Mapbox pin was Dopemu) 2026-07-24"
+  }
+}

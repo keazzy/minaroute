@@ -12,6 +12,12 @@
     "validate-content": "tsx src/lib/content/validate.ts",
     "gen:tab-icons": "node scripts/gen-tab-icons.mjs",
     "import-mosques": "tsx scripts/import-mosques.ts",
+    "schools:normalize": "tsx scripts/enrich-schools/normalize.ts",
+    "schools:geocode": "tsx scripts/enrich-schools/geocode.ts",
+    "schools:dedupe": "tsx scripts/enrich-schools/dedupe.ts",
+    "schools:sheet": "tsx scripts/enrich-schools/to-sheet.ts",
+    "schools:pipeline": "npm run schools:normalize && npm run schools:geocode && npm run schools:dedupe && npm run schools:sheet",
+    "schools:upload": "tsx scripts/enrich-schools/upload-approved.ts",
     "build:web": "expo export -p web && node scripts/post-build.js",
     "preview:web": "npx serve dist"
   },

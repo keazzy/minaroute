@@ -84,6 +84,8 @@ A shared running log between the **build agent** (Claude Code, in the repo) and 
 
 - **2026-07-20 — Discovery-side workstream queued (separate from pilgrimage).** Wrote `docs/muslim-schools-enrichment-brief.md` — a paste-ready handoff for a new chat (Fable 5) to build a **human-in-the-loop pipeline** that finds Muslim schools not on Google Maps (web search → geocode → dedupe → review sheet → approve → upsert to `places`). Guardrails: no locked-social-platform scraping, human approval mandatory, agentic-research/deterministic-upload split, Lagos-schools-first, link-don't-rehost images (og:image). This is the everyday-discovery side of Minaroute — runs in its own branch, doesn't touch the Manasik pilgrimage build.
 
+- **2026-07-20 — Map/Mapbox workstream queued (discovery-side).** Wrote `docs/map-mapbox-brief.md` — a paste-ready handoff for a separate chat to migrate the **everyday discovery** map from expo-maps (native) + Leaflet (web) to **Mapbox** (`@rnmapbox/maps` native + web choice), restyle markers, add clustering. Scope-fenced to discovery only (NOT the pilgrimage Haram map). **Flags a locked-stack deviation** ("expo-maps for discovery, no Mapbox" → moving to Mapbox; already the geocoder) — the map chat should update `minaroute-codebase-notes.md` + `product-architecture.md` when done. Native module → config plugin + fresh EAS dev build; public `MAPBOX_ACCESS_TOKEN` already in `.env.local`, secret download token via EAS (never commit).
+
 ## Decisions & deviations
 
 - **Config lives in `app.json`, not `app.config.ts`.** The roadmap/PRD reference `app.config.ts`; the real repo has always used `app.json`. Kept `app.json` (do-not-re-scaffold). TASK-002 edits applied there.

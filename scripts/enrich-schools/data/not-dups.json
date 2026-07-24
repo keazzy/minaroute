@@ -1,0 +1,102 @@
+[
+  {
+    "candidate_id": "ansar-ud-deen-academy-surulere-surulere",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-nursery-and-primary-school-ebute-metta-ebute-metta-east-yaba",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-society-senior-grammar-school-badagry-badagry",
+    "place_id": "e0353ef6-22b7-47a5-9053-69189d33ae1f",
+    "note": "distinct from 'Ansar-Ud-Deen Society of Nigeria'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-society-junior-grammar-school-badagry-badagry",
+    "place_id": "e0353ef6-22b7-47a5-9053-69189d33ae1f",
+    "note": "distinct from 'Ansar-Ud-Deen Society of Nigeria'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-model-college-agege-agege-dopemu",
+    "place_id": "fd001127-ea55-4581-8501-8e1106bb944b",
+    "note": "distinct from 'Anwar-ul Islam Central Mosque'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-college-isolo-isolo-oshodi-isolo",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "an-nur-nursery-primary-school-bariga-bariga-shomolu",
+    "place_id": "238c53e4-8236-4617-b89e-0e285d77f3b1",
+    "note": "distinct from 'Islamic Center Of Mid City (Masjid An-Nur)'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-nursery-and-primary-school-bariga-bariga-shomolu",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-primary-school-alakoro-lagos-island-alakoro-lagos-island-lga",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-primary-school-okepopo-lagos-island-okepopo-lagos-island-lga",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-primary-school-isolo-isolo-oshodi-isolo-lga",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-primary-school-igbogbo-ikorodu-igbogbo-ikorodu-lga",
+    "place_id": "55a68c2d-dfe4-415d-885c-7ec85ab902ac",
+    "note": "distinct from 'Ansar-Ud-Deen Grammar School'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-primary-school-agege-agege-lga",
+    "place_id": "fd001127-ea55-4581-8501-8e1106bb944b",
+    "note": "distinct from 'Anwar-ul Islam Central Mosque'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-primary-school-ijede-ikorodu-ijede-ikorodu-lga",
+    "place_id": "fd001127-ea55-4581-8501-8e1106bb944b",
+    "note": "distinct from 'Anwar-ul Islam Central Mosque'"
+  },
+  {
+    "candidate_id": "darul-islam-schools-mushin",
+    "place_id": "2b60e6bf-aac7-49c9-9e0a-34e08c602070",
+    "note": "distinct from 'Islamic Center of Walnut Creek (Darul-Islam Mosque)'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-society-senior-grammar-school-badagry-badagry",
+    "place_id": "e2f82963-3d3f-4fc8-915c-f9e251cbd0d2",
+    "note": "distinct from 'Ansar-Ud-Deen Society Of Nigeria'"
+  },
+  {
+    "candidate_id": "ansar-ud-deen-society-junior-grammar-school-badagry-badagry",
+    "place_id": "e2f82963-3d3f-4fc8-915c-f9e251cbd0d2",
+    "note": "distinct from 'Ansar-Ud-Deen Society Of Nigeria'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-model-college-agege-agege-dopemu",
+    "place_id": "edd03e51-74cf-46fb-9694-9b525b46de4b",
+    "note": "distinct from 'Anwar-Ul Islam Youth Association of Nigeria'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-primary-school-agege-agege-lga",
+    "place_id": "edd03e51-74cf-46fb-9694-9b525b46de4b",
+    "note": "distinct from 'Anwar-Ul Islam Youth Association of Nigeria'"
+  },
+  {
+    "candidate_id": "anwar-ul-islam-primary-school-ijede-ikorodu-ijede-ikorodu-lga",
+    "place_id": "edd03e51-74cf-46fb-9694-9b525b46de4b",
+    "note": "distinct from 'Anwar-Ul Islam Youth Association of Nigeria'"
+  }
+]

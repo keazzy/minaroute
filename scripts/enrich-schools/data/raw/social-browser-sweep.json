@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Modirasat Musiliudeen Al-Islamiyya Wal-Arabiyya",
+    "description": "Madrasah in Ilasamaja, Mushin — 'Teaching the Deen of Islam and letting people understand the beauty of Quran.'",
+    "address": "Oladehinde Coker Street, Ilasamaja, Mushin",
+    "area": "Ilasamaja (Mushin)",
+    "city": "Lagos",
+    "state": "Lagos",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "social_handle": null,
+    "image_url": null,
+    "source_url": "https://www.facebook.com/modirasatmusiliu",
+    "confidence": 0.5,
+    "evidence": "Found via in-session Facebook page search (reviewer's own account, 2026-07-23): page card shows School category, address, 34 followers. Details from search-result card; full page not yet reviewed"
+  },
+  {
+    "name": "Ihya Us-Sunna Islamiyya",
+    "description": "Not-for-profit Qur'an memorisation centre (tahfiz) launched by the Islamic Concerned Committee of Mile 12 International Market.",
+    "address": null,
+    "area": "Mile 12 (Kosofe)",
+    "city": "Lagos",
+    "state": "Lagos",
+    "phone": null,
+    "email": null,
+    "website": null,
+    "social_handle": null,
+    "image_url": null,
+    "source_url": "https://www.facebook.com/ihyausunnaislamiyya",
+    "confidence": 0.45,
+    "evidence": "Found via in-session Facebook page search (reviewer's own account, 2026-07-23): page card describes the Mile 12 International Market tahfiz centre, 12 followers. Details from search-result card; full page not yet reviewed"
+  }
+]

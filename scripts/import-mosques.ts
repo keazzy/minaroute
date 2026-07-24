@@ -221,7 +221,7 @@ async function main() {
 
         allMosques.set(place.id, {
           name: place.displayName?.text || 'Unknown Mosque',
-          category: 'Mosque',
+          category: 'mosque',
           address: place.formattedAddress || null,
           city,
           state,
