@@ -30,6 +30,7 @@
     "@lodev09/react-native-true-sheet": "^3.7.3",
     "@lottiefiles/dotlottie-react": "^0.17.13",
     "@react-native-picker/picker": "2.11.4",
+    "@rnmapbox/maps": "^10.3.5",
     "@supabase/supabase-js": "^2.49.1",
     "expo": "^57.0.7",
     "expo-asset": "~57.0.6",

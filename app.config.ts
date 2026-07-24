@@ -28,4 +28,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     },
   },
+  extra: {
+    ...config.extra,
+    // Mapbox *public* token (pk.…) for the discovery map. Ships in the binary by
+    // design — Mapbox scopes public tokens to client use. Same sourcing rules as
+    // the Google key: `.env.local` locally, `eas env:create` for EAS builds.
+    mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN,
+  },
 });
