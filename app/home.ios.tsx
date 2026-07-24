@@ -3,7 +3,7 @@ import EventDetailsContent from '@/components/event-details-content';
 import { Glass } from '@/components/Glass';
 import { HomeSheetContent } from '@/components/HomeSheetContent';
 import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
-import { placesInBounds, useSearchThisArea } from '@/hooks/use-search-this-area';
+import { placesInBounds, SEARCH_THIS_AREA_ENABLED, useSearchThisArea } from '@/hooks/use-search-this-area';
 import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
 import { Location } from '@/constants/mockData';
@@ -283,6 +283,7 @@ export default function HomeScreen() {
 
   const handlePlaceDetailsDismiss = useCallback(() => {
     setSelectedPlace(null);
+    setSelectedLocationId(null);
     restoreHomeSheet();
     if (userCoords && locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED) {
       mapRef.current?.animateToRegion({
@@ -715,7 +716,7 @@ export default function HomeScreen() {
 
       {/* "Search this area" pill — appears after panning away, above the collapsed sheet */}
       <SearchThisAreaButton
-        visible={searchAreaVisible && !selectedPlace && !selectedEvent}
+        visible={SEARCH_THIS_AREA_ENABLED && searchAreaVisible && !selectedPlace && !selectedEvent}
         onPress={handleSearchThisArea}
         style={{ bottom: snapPoints[0] + 12 }}
       />
@@ -797,6 +798,7 @@ export default function HomeScreen() {
             placeDetailsSheetRef.current?.dismiss();
             // Manually trigger dismiss handler since programmatic dismiss doesn't fire onDismiss
             setSelectedPlace(null);
+            setSelectedLocationId(null);
             restoreHomeSheet();
           }}
           activeOpacity={0.7}

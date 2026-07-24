@@ -1,7 +1,7 @@
 import CategoryCard from '@/components/CategoryCard';
 import EventDetailsContent from '@/components/event-details-content';
 import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
-import { placesInBounds, useSearchThisArea } from '@/hooks/use-search-this-area';
+import { placesInBounds, SEARCH_THIS_AREA_ENABLED, useSearchThisArea } from '@/hooks/use-search-this-area';
 import { BottomSheetFlatList, BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import PlaceCard from '@/components/place-card';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
@@ -356,6 +356,7 @@ export default function HomeScreen() {
 
   const handlePlaceDetailsDismiss = useCallback(() => {
     setSelectedPlace(null);
+    setSelectedLocationId(null);
     restoreHomeSheet();
     // Recenter map to user location when closing place details
     if (userCoords && locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED) {
@@ -773,7 +774,7 @@ export default function HomeScreen() {
 
       {/* "Search this area" pill — appears after panning away, above the collapsed sheet */}
       <SearchThisAreaButton
-        visible={searchAreaVisible && !selectedPlace && !selectedEvent}
+        visible={SEARCH_THIS_AREA_ENABLED && searchAreaVisible && !selectedPlace && !selectedEvent}
         onPress={handleSearchThisArea}
         style={{ bottom: snapPoints[0] + 12 }}
       />

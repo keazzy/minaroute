@@ -16,6 +16,15 @@ function haversineKm(a: Coordinate, b: Coordinate) {
 }
 
 /**
+ * Owner call (2026-07-24): while every place ships to the client and all pins
+ * are always on the map (clustered), the pill re-anchors the list but never
+ * reveals new pins — so it reads as noise. Hidden until place data is fetched
+ * per-viewport (server-side bounds query), at which point flipping this flag
+ * restores the full UX below.
+ */
+export const SEARCH_THIS_AREA_ENABLED = false;
+
+/**
  * TripAdvisor-style "Search this area": watches the map's camera-idle events
  * and flips `visible` once the viewport has drifted meaningfully away from the
  * last-searched spot (≥30% of the visible width, or zoomed out ≥1 level).

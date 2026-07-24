@@ -31,17 +31,19 @@ const STYLE_URL = 'mapbox://styles/mapbox/light-v11';
 const GREEN = '#12664F';
 
 // Sprites from scripts/gen-map-markers.mjs — "<category>" chip + "<category>-selected" teardrop.
+// Keys are "mr-"-prefixed because the style's own sprite catalog has images
+// named e.g. 'school', and registering over them logs a MapLoad error.
 const MARKER_IMAGES = {
-  'mosque': require('@/assets/images/map-markers/mosque.png'),
-  'mosque-selected': require('@/assets/images/map-markers/mosque-selected.png'),
-  'school': require('@/assets/images/map-markers/school.png'),
-  'school-selected': require('@/assets/images/map-markers/school-selected.png'),
-  'halal-food': require('@/assets/images/map-markers/halal-food.png'),
-  'halal-food-selected': require('@/assets/images/map-markers/halal-food-selected.png'),
-  'event': require('@/assets/images/map-markers/event.png'),
-  'event-selected': require('@/assets/images/map-markers/event-selected.png'),
-  'place': require('@/assets/images/map-markers/place.png'),
-  'place-selected': require('@/assets/images/map-markers/place-selected.png'),
+  'mr-mosque': require('@/assets/images/map-markers/mosque.png'),
+  'mr-mosque-selected': require('@/assets/images/map-markers/mosque-selected.png'),
+  'mr-school': require('@/assets/images/map-markers/school.png'),
+  'mr-school-selected': require('@/assets/images/map-markers/school-selected.png'),
+  'mr-halal-food': require('@/assets/images/map-markers/halal-food.png'),
+  'mr-halal-food-selected': require('@/assets/images/map-markers/halal-food-selected.png'),
+  'mr-event': require('@/assets/images/map-markers/event.png'),
+  'mr-event-selected': require('@/assets/images/map-markers/event-selected.png'),
+  'mr-place': require('@/assets/images/map-markers/place.png'),
+  'mr-place-selected': require('@/assets/images/map-markers/place-selected.png'),
 };
 
 const CATEGORY_ICON: Record<string, string> = {
@@ -53,7 +55,7 @@ const CATEGORY_ICON: Record<string, string> = {
 
 function iconKeyFor(marker: MarkerProps): string {
   const category = (marker.category ?? marker.description ?? '').toLowerCase();
-  return CATEGORY_ICON[category] ?? 'place';
+  return `mr-${CATEGORY_ICON[category] ?? 'place'}`;
 }
 
 // Same approximation both legacy implementations used.
@@ -244,7 +246,7 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
 
       <Images images={MARKER_IMAGES} />
 
-      {showsUserLocation ? <UserLocation visible /> : null}
+      {showsUserLocation ? <UserLocation visible showsUserHeadingIndicator /> : null}
 
       <ShapeSource
         id="places"

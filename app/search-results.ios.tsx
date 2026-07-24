@@ -3,7 +3,7 @@ import type { MapBounds, MapViewHandle } from '@/components/map';
 import MapView, { isPointInBounds, Marker, PROVIDER_DEFAULT } from '@/components/map';
 import { NativeSheet, type NativeSheetRef } from '@/components/NativeSheet';
 import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
-import { useSearchThisArea } from '@/hooks/use-search-this-area';
+import { SEARCH_THIS_AREA_ENABLED, useSearchThisArea } from '@/hooks/use-search-this-area';
 import PlaceCard from '@/components/place-card';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -726,6 +726,7 @@ export default function SearchResultsScreen() {
   
   const expandSheet = useCallback(() => {
     isSheetExpandedRef.current = true;
+    setSelectedMarkerPlace(null);
     Animated.spring(sheetAnim, {
       toValue: 1,
       useNativeDriver: false,
@@ -1060,7 +1061,7 @@ export default function SearchResultsScreen() {
 
       {/* "Search this area" pill — map mode only, floats above the collapsed sheet */}
       <SearchThisAreaButton
-        visible={searchAreaVisible && !isSheetExpanded && !selectedMarkerPlace}
+        visible={SEARCH_THIS_AREA_ENABLED && searchAreaVisible && !isSheetExpanded && !selectedMarkerPlace}
         onPress={handleSearchThisArea}
         style={{ top: collapsedSheetTop - 64 }}
       />
