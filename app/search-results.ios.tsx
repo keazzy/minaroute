@@ -1048,7 +1048,7 @@ export default function SearchResultsScreen() {
 
       {/* "Search this area" pill — map mode only, floats above the collapsed sheet */}
       <SearchThisAreaButton
-        visible={searchAreaVisible && !isSheetExpanded}
+        visible={searchAreaVisible && !isSheetExpanded && !selectedMarkerPlace}
         onPress={handleSearchThisArea}
         style={{ top: collapsedSheetTop - 64 }}
       />

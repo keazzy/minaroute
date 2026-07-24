@@ -773,7 +773,7 @@ export default function HomeScreen() {
 
       {/* "Search this area" pill — appears after panning away, above the collapsed sheet */}
       <SearchThisAreaButton
-        visible={searchAreaVisible}
+        visible={searchAreaVisible && !selectedPlace && !selectedEvent}
         onPress={handleSearchThisArea}
         style={{ bottom: snapPoints[0] + 12 }}
       />
