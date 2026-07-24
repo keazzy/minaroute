@@ -683,8 +683,20 @@ export default function SearchResultsScreen() {
         : INITIAL_REGION;
     }
 
-    const lats = mappablePlaces.map((p) => p.coordinate.latitude);
-    const lngs = mappablePlaces.map((p) => p.coordinate.longitude);
+    // Outlier-resistant fit: anchor on the median coordinate and only fit
+    // places within 250km of it — a single bad geocode was stretching the
+    // bounding box until the camera sat over open ocean.
+    const sortedLats = mappablePlaces.map((p) => p.coordinate.latitude).sort((a, b) => a - b);
+    const sortedLngs = mappablePlaces.map((p) => p.coordinate.longitude).sort((a, b) => a - b);
+    const median = {
+      latitude: sortedLats[Math.floor(sortedLats.length / 2)],
+      longitude: sortedLngs[Math.floor(sortedLngs.length / 2)],
+    };
+    const nearMedian = mappablePlaces.filter((p) => haversineKm(median, p.coordinate) <= 250);
+    const fitPlaces = nearMedian.length > 0 ? nearMedian : mappablePlaces;
+
+    const lats = fitPlaces.map((p) => p.coordinate.latitude);
+    const lngs = fitPlaces.map((p) => p.coordinate.longitude);
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs);
