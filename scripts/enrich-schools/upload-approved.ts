@@ -53,6 +53,14 @@ function orNull(value: string | undefined): string | null {
   return t.length ? t : null;
 }
 
+/** Blank cells must be null, not 0 — Number('') === 0 would upload Null Island. */
+function parseCoord(value: string | undefined): number | null {
+  const t = (value ?? '').trim();
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n !== 0 ? n : null;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
@@ -66,7 +74,10 @@ async function main() {
   console.log(`📄 ${csvPath}`);
   console.log(`   ${rows.length} rows, ${approved.length} approved\n`);
 
-  const unverified = approved.filter((r) => (r.needs_verification ?? '') === 'true');
+  // Sheets/Excel round-trips uppercase booleans to TRUE/FALSE — compare loosely
+  const unverified = approved.filter((r) =>
+    ['true', 'yes', '1'].includes((r.needs_verification ?? '').trim().toLowerCase()),
+  );
   if (unverified.length) {
     console.log(
       `⚠️  ${unverified.length} approved row(s) are flagged needs_verification ` +
@@ -123,11 +134,11 @@ async function main() {
 
   for (const r of approved) {
     const name = orNull(r.name);
-    const lat = Number(r.lat);
-    const lng = Number(r.lng);
+    const lat = parseCoord(r.lat);
+    const lng = parseCoord(r.lng);
 
-    if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-      console.log(`   ❌ refused "${r.name ?? '?'}": missing name or valid lat/lng`);
+    if (!name || lat == null || lng == null) {
+      console.log(`   ❌ refused "${r.name ?? '?'}": missing name or valid non-zero lat/lng`);
       refused++;
       continue;
     }
@@ -220,8 +231,8 @@ async function main() {
     ['address', (r) => orNull(r.address)],
     ['city', (r) => orNull(r.city)],
     ['state', (r) => orNull(r.state)],
-    ['latitude', (r) => (Number.isFinite(Number(r.lat)) ? Number(r.lat) : null)],
-    ['longitude', (r) => (Number.isFinite(Number(r.lng)) ? Number(r.lng) : null)],
+    ['latitude', (r) => parseCoord(r.lat)],
+    ['longitude', (r) => parseCoord(r.lng)],
     ['photos', (r) => (orNull(r.image_url) ? [r.image_url.trim()] : null)],
     ['source_url', (r) => orNull(r.source_url)],
     ['website', (r) => orNull(r.website)],

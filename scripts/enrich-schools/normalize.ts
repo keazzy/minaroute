@@ -188,6 +188,11 @@ function main() {
       if (!o) continue;
       const { evidence_append, ...fields } = o;
       Object.assign(c, fields);
+      // Human-supplied coords are pins, not geocodes — mark them 'manual' so
+      // the carry-over below and geocode --retry can never revert them.
+      if (('lat' in fields || 'lng' in fields) && !('geocode_status' in fields)) {
+        c.geocode_status = 'manual';
+      }
       if (typeof evidence_append === 'string') {
         c.evidence = c.evidence ? `${c.evidence}; ${evidence_append}` : evidence_append;
       }

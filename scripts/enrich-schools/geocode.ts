@@ -82,13 +82,19 @@ async function mapbox(query: string, fromAddress: boolean): Promise<Hit | null> 
     permanent: String(MAPBOX_PERMANENT),
   });
   const res = await fetch(`https://api.mapbox.com/search/geocode/v6/forward?${params}`);
-  if (res.status === 401 || res.status === 403 || res.status === 422) {
+  if (res.status === 401 || res.status === 403) {
+    // Token/account problem — no point retrying for the rest of the run
     denied.add('mapbox');
     const body = await res.text();
     console.log(
       `   ℹ️  Mapbox unavailable (HTTP ${res.status}: ${body.slice(0, 120)}) — falling back` +
         (MAPBOX_PERMANENT ? '\n      (permanent mode needs billing enabled; MAPBOX_PERMANENT=false for smoke tests)' : ''),
     );
+    return null;
+  }
+  if (res.status === 422) {
+    // Query-specific rejection (e.g. too long) — skip this query only
+    console.log(`   ℹ️  Mapbox rejected query "${query.slice(0, 60)}…" (422) — trying next provider`);
     return null;
   }
   if (!res.ok) throw new Error(`Mapbox HTTP ${res.status}`);
@@ -227,6 +233,15 @@ async function areaCentroid(
   return null;
 }
 
+function allProvidersDenied(): boolean {
+  return (
+    (!MAPBOX_TOKEN || denied.has('mapbox')) &&
+    denied.has('google-geocoding') &&
+    denied.has('google-places') &&
+    denied.has('nominatim')
+  );
+}
+
 async function tryProviders(query: string, key: string, fromAddress: boolean): Promise<Hit | null> {
   if (MAPBOX_TOKEN && !denied.has('mapbox')) {
     const hit = await mapbox(query, fromAddress);
@@ -284,6 +299,11 @@ async function main() {
       skipped++;
       continue;
     }
+    if (allProvidersDenied()) {
+      // Never mark rows 'failed' that were never attempted — a re-run must retry them
+      console.log('⛔ All geocoding providers unavailable — leaving remaining rows pending');
+      break;
+    }
 
     try {
       const tokens = c.area ? areaTokens(c.area) : [];
@@ -324,9 +344,14 @@ async function main() {
       }
 
       if (!hit) {
-        c.geocode_status = 'failed';
-        failed++;
-        console.log(`   ❌ ${c.name}: no result inside Lagos`);
+        if (allProvidersDenied()) {
+          // Providers died mid-candidate — this was not a real miss
+          console.log(`   ⏸  ${c.name}: providers became unavailable — left pending`);
+        } else {
+          c.geocode_status = 'failed';
+          failed++;
+          console.log(`   ❌ ${c.name}: no result inside Lagos`);
+        }
       } else {
         c.lat = Number(hit.lat.toFixed(6));
         c.lng = Number(hit.lng.toFixed(6));
