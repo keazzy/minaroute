@@ -11,6 +11,7 @@
     "lint": "expo lint",
     "validate-content": "tsx src/lib/content/validate.ts",
     "gen:tab-icons": "node scripts/gen-tab-icons.mjs",
+    "gen:map-markers": "node scripts/gen-map-markers.mjs",
     "import-mosques": "tsx scripts/import-mosques.ts",
     "schools:normalize": "tsx scripts/enrich-schools/normalize.ts",
     "schools:geocode": "tsx scripts/enrich-schools/geocode.ts",
