@@ -253,8 +253,8 @@ const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
         ref={baseSourceRef}
         shape={baseShape}
         cluster
-        clusterRadius={48}
-        clusterMaxZoomLevel={16}
+        clusterRadius={35}
+        clusterMaxZoomLevel={14}
         onPress={handleBasePress}
       >
         <CircleLayer
