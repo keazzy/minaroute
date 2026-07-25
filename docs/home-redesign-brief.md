@@ -79,14 +79,39 @@ The Figma's "One of the best (1 source)" line conflates these. Keep them separat
 
 Owner is integrating third-party sources **plus manual entry**. Schema must serve both — every third-party field nullable so a hand-added event is valid.
 
-**Source research is complete, and the honest finding is that no major platform has usable Lagos Islamic event coverage.** Ranked plan:
+**Three independent research sweeps ran (2026-07-25) and converged on the same answer: Lagos Islamic events are not on ticketing rails at all.** They are free, mosque- and organisation-hosted, and promoted via WhatsApp and Instagram. The strategic consequence: **automated ingestion is a UK/US capability; Lagos — the primary market — is human curation.** If the roadmap assumes automated Lagos ingest, retire that assumption now.
 
-1. **Bitooqoh** (`bitooqoh.com`) — a Nigerian, Muslim-focused ticketing platform, and by far the best fit in the landscape. Unauthenticated public JSON endpoint (`bitooqoh-server-prod.onrender.com/api/v1/event/get-events/all`) returning ~25 events, ~16 of 20 upcoming genuinely Islamic, 11 Lagos venues, NGN, growing ~11/month. Real organisers: MSSN UI, Alhabibiyyah Islamic Centre, Muslimah's Haven, AMALEN. Rich ticket tiers. Public URL is constructible as `bitooqoh.com/explore/<slug>`.
-   **Caveat — resolve before shipping:** the API is undocumented and unsanctioned; the site has no `/terms`, `/privacy` or `/developers` page. Nothing forbids use, but nothing permits it either. **Email them for written permission first.** This is consistent with the project's existing human-in-the-loop sourcing guardrails, and a young Muslim-focused startup will likely welcome the distribution — which converts a fragile scrape into a real partnership.
-2. **Manual entry — first-class admin surface, not a fallback.** Lagos's biggest Islamic events run their own bespoke portals and appear on no aggregator: MSSN Lagos Annual Conference (`mac.mssnlagos.net`), 1Ummah Peace & Unity Convention (`1ummahng.org`). No iCal feeds anywhere. Manual entry is the only path to the highest-value events in the city — budget it as core product, alongside the existing `app/admin/events.tsx`.
-3. **Per-organiser adapters, one at a time.** `1ummahng.org` exposes a public WooCommerce Store API with live ticket products and prices. Only worth building once an organiser recurs; do not build a generic scraper.
+The two hardest data points, both from exhaustive enumeration rather than sampling:
 
-**Do not integrate Eventbrite or Luma.** Verified against the live APIs, not the docs: Eventbrite's `/v3/events/search/` returns **404 — the discovery endpoint is gone**, other organisers' events 403 without org membership, and its API Terms forbid storing past-event content, require a crawlable non-`nofollow` backlink (incoherent for a mobile app), and §3.6(9) bars building a product that competes with Eventbrite — which Minaroute does. Lagos coverage is ~1–2 genuinely Islamic events regardless. Luma (note: `lu.ma` now redirects to `luma.com`) requires a paid Luma Plus subscription, is own-calendar-only with no discovery, and has **zero** Islamic events in Lagos. AllEvents.in is enterprise sales-gated *and* returns zero Islamic Lagos events. Facebook Events has been ungranted since 2018 and is barred by our own guardrail anyway.
+- `allevents.in` returns **zero** Islamic events not only in Lagos but in Kano, Sokoto, Maiduguri, Ilorin and Kaduna — the majority-Muslim north. Zero coverage there is the strongest signal in the whole survey.
+- `tix.africa`'s **entire** Nigerian catalogue (192 events) scanned against 30 Islamic keywords: **zero hits**.
+
+#### Lagos (primary market)
+
+1. **Manual entry — the product, not a fallback.** Lagos's biggest Islamic events run bespoke microsites and appear on no platform. MSSN Lagos runs the **115th** Islamic Vacation Course (25 Dec–1 Jan, Epe, ₦9,000–20,000) at `event.mssnlagos.net` — the 115th iteration of a recurring event, on zero ticketing rails. NASFAT, Nigeria's largest Muslim organisation, publishes no structured events. The sharpest single finding: **Lekki Central Mosque has The Events Calendar plugin installed and its REST endpoint returns `{"events":[],"total":0}`** — the infrastructure exists in Lagos; the data doesn't. Manual-entry *quality* is the product here. Budget it as core surface alongside `app/admin/events.tsx`.
+2. **Tickethub.ng** — lowest yield (1 Islamic event found) but **the best legal footing of any source surveyed**: its `robots.txt` explicitly allows ClaudeBot and it publishes an `llms.txt`. That is affirmative permission, which nothing else here has. `rx.tickethub.ng/api/v1/events?q=&per_page=100`, no auth (use `q=`, not `search=` — the latter is silently ignored). Worth wiring precisely *because* we're permitted to.
+3. **Bitooqoh** (`bitooqoh.com`) — best yield: unauthenticated JSON at `bitooqoh-server-prod.onrender.com/api/v1/event/get-events/all`, ~25 events, ~16 of 20 upcoming genuinely Islamic, 11 Lagos venues, NGN, growing ~11/month. Organisers include MSSN UI, Alhabibiyyah Islamic Centre, Muslimah's Haven, AMALEN. Rich ticket tiers; URLs constructible as `bitooqoh.com/explore/<slug>`.
+   **Resolve before shipping:** the API is undocumented and unsanctioned — no `/terms`, `/privacy` or `/developers` page exists. Nothing forbids use; nothing permits it either. **Email for written permission first**, consistent with the project's existing human-in-the-loop sourcing guardrails. A young Muslim-focused startup will likely welcome the distribution, turning a fragile scrape into a partnership.
+4. **Curation inputs, not feeds:** `muslimnews.com.ng` has live RSS with permissive robots.txt — announcements to curate by hand. `masjid.imaanity.com` lists 68+ Lagos masjids with Jumu'ah times; no API, but a strong **venue seed list and partnership target**. Direct relationships with MSSN Lagos, NASFAT, MULAN, MYSF and Lekki Muslim Ummah will outperform every API here combined.
+
+**Seed these manually** — all verified real, none on an ingestible feed: MSSN Lagos 115th Islamic Vacation Course (25 Dec–1 Jan, Epe); Ibn Awf Conference (1 Aug 2026, Ikorodu — Shariah-compliant finance); Project Code-Hijabi PCH Ball (LASU, 14 Nov 2026).
+
+#### UK/US (later phase — do not build for launch)
+
+5. **A JSON-LD `Event` extractor** is the highest-leverage single build: standards-based, and one parser unlocks **muslimevent.co.uk** (78 event URLs in sitemap, clean schema.org `Event` markup, 29 UK cities, `robots.txt` permits it, ToS has no scraping/caching/redistribution clauses) plus likely **Qariyb** (Islam-native fields — halal food, gender-based seating, wudu facilities; partnership candidate).
+6. **A The Events Calendar connector** — mosques on WordPress + TEC expose `/wp-json/tribe/events/v1/events` unauthenticated, with `modified_utc` for cheap incremental sync and iCal as fallback. Verified live: Islamic Center of Southern California **671** upcoming, MCC East Bay **135**, Cambridge Central Mosque **32**. This is the *same population* as JSON-LD on mosque sites (the plugin emits both), so REST is strictly better. Coverage is partial — ~5 of 16 mosques probed had the plugin. Honour `Crawl-delay` where set.
+
+#### Do not integrate
+
+**`allevents.in`** — ToS explicitly bans crawling/scraping **and** using its content to train ML/AI models; zero Islamic events nationwide regardless. **`tix.africa`** — ToS §9 requires a commercial licence plus attribution, and its schema has no end date, timezone or coordinates. **TIXVNT** — ToS explicitly bans compiling a database. **Eventbrite** — `/v3/events/search/` returns **404**; discovery is deleted, not auth-gated. Other organisers' events 403 without org membership. Terms forbid retaining past-event content, require a crawlable non-`nofollow` backlink (incoherent for a mobile app), and §3.6(9) bars products competing with Eventbrite — which Minaroute is. **Luma** (`lu.ma` now redirects to `luma.com`) — paid Luma Plus tier, own-calendar-only, no discovery, zero Islamic events in Lagos. **Meetup** — ~$30/mo for OAuth access, no Muslim groups in Lagos at all. **Facebook/Instagram Events** — Marketing-Partners-only since 2018, no public location search, barred by our own guardrail regardless; note `pages_events` is a *write* permission for ads conversions, not read access. **Muslim Pro, HalalTrip, Mvslim, Muslim Central** — no event APIs; Mvslim dormant since 2022, Muslim Central is a podcast network. **Nairabox, Selar, Shows.ng, Afritickets, Ticketmaster** — dead, gutted, or no Nigeria coverage.
+
+Ignore any "International Conference on Islamic Culture, Society and Identity — Lagos" listings on conference-index sites — predatory conference-mill entries auto-generated across hundreds of cities, not real events.
+
+#### Dedup is required, not optional
+
+Project Code-Hijabi appears on **both** Bitooqoh and Tickethub. The `(source, external_id)` unique index below handles re-ingest from one source but not the same event arriving from two. Add fuzzy title+date matching — and at these volumes, a **human review step beats clever matching**, consistent with how the schools pipeline already works.
+
+> **Launch-volume reality — read before building three carousels.** The Figma has *three* content sections. Every ingestible Lagos source combined yields roughly **17 upcoming Islamic events**, minus duplicates. That will not convincingly fill "Events coming up soon" **and** "Things to do this weekend in Lagos" on day one. This is the strongest argument for the empty-section decision below, and possibly for **shipping fewer sections at launch** and adding them as curation builds inventory. Worth settling before any carousel is built.
 
 Add to `events`:
 
@@ -199,12 +224,13 @@ Items 1–3 are unglamorous and land no visible UI. Doing them after the screen 
 
 ## Owner provides in-chat
 
-1. **Bitooqoh permission** — email them for written API permission before we ship the adapter (research done; they're the recommended primary source)
-2. **The attendance badge** — cut it, replace it, or accept it renders only for hand-entered events (no API provides the data)
-3. **The extra two category tiles** + the pastel tile palette
-4. **Dark palette** values (warm-dark, to match the cream light theme)
-5. **Location-granted and location-denied** row designs
-6. **Empty / loading / error** treatment per section — and whether empty sections hide
-7. **Countdown card** design for the top slot (the Figma only has the no-trip promo)
-8. **Place detail** UI (deferred — separate discussion)
-9. Whether the promo image (Haram at sunset) ships bundled or remote
+1. **Bitooqoh permission** — email them for written API permission before we ship that adapter (Tickethub needs no such ask; its robots.txt already permits us)
+2. **How many carousels ship at launch**, given ~17 ingestible Lagos events total — three sections may look empty
+3. **The attendance badge** — cut it, replace it, or accept it renders only for hand-entered events (no API provides the data)
+4. **The extra two category tiles** + the pastel tile palette
+5. **Dark palette** values (warm-dark, to match the cream light theme)
+6. **Location-granted and location-denied** row designs
+7. **Empty / loading / error** treatment per section — and whether empty sections hide
+8. **Countdown card** design for the top slot (the Figma only has the no-trip promo)
+9. **Place detail** UI (deferred — separate discussion)
+10. Whether the promo image (Haram at sunset) ships bundled or remote
