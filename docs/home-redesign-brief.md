@@ -77,7 +77,16 @@ The Figma's "One of the best (1 source)" line conflates these. Keep them separat
 
 `events` today has: `id, title, description, location_name, city, state, photo` (single), `approved`, `tags` (comma-separated string), and **no dates, no coordinates, no price, no attendance**. "Events coming up soon" and "things to do this weekend" cannot be ordered or filtered at all until this is fixed.
 
-Owner is integrating third-party sources (Eventbrite, Luma, Nigerian ticketing platforms) **plus manual entry**. Schema must serve both — every third-party field nullable so a hand-added event is valid.
+Owner is integrating third-party sources **plus manual entry**. Schema must serve both — every third-party field nullable so a hand-added event is valid.
+
+**Source research is complete, and the honest finding is that no major platform has usable Lagos Islamic event coverage.** Ranked plan:
+
+1. **Bitooqoh** (`bitooqoh.com`) — a Nigerian, Muslim-focused ticketing platform, and by far the best fit in the landscape. Unauthenticated public JSON endpoint (`bitooqoh-server-prod.onrender.com/api/v1/event/get-events/all`) returning ~25 events, ~16 of 20 upcoming genuinely Islamic, 11 Lagos venues, NGN, growing ~11/month. Real organisers: MSSN UI, Alhabibiyyah Islamic Centre, Muslimah's Haven, AMALEN. Rich ticket tiers. Public URL is constructible as `bitooqoh.com/explore/<slug>`.
+   **Caveat — resolve before shipping:** the API is undocumented and unsanctioned; the site has no `/terms`, `/privacy` or `/developers` page. Nothing forbids use, but nothing permits it either. **Email them for written permission first.** This is consistent with the project's existing human-in-the-loop sourcing guardrails, and a young Muslim-focused startup will likely welcome the distribution — which converts a fragile scrape into a real partnership.
+2. **Manual entry — first-class admin surface, not a fallback.** Lagos's biggest Islamic events run their own bespoke portals and appear on no aggregator: MSSN Lagos Annual Conference (`mac.mssnlagos.net`), 1Ummah Peace & Unity Convention (`1ummahng.org`). No iCal feeds anywhere. Manual entry is the only path to the highest-value events in the city — budget it as core product, alongside the existing `app/admin/events.tsx`.
+3. **Per-organiser adapters, one at a time.** `1ummahng.org` exposes a public WooCommerce Store API with live ticket products and prices. Only worth building once an organiser recurs; do not build a generic scraper.
+
+**Do not integrate Eventbrite or Luma.** Verified against the live APIs, not the docs: Eventbrite's `/v3/events/search/` returns **404 — the discovery endpoint is gone**, other organisers' events 403 without org membership, and its API Terms forbid storing past-event content, require a crawlable non-`nofollow` backlink (incoherent for a mobile app), and §3.6(9) bars building a product that competes with Eventbrite — which Minaroute does. Lagos coverage is ~1–2 genuinely Islamic events regardless. Luma (note: `lu.ma` now redirects to `luma.com`) requires a paid Luma Plus subscription, is own-calendar-only with no discovery, and has **zero** Islamic events in Lagos. AllEvents.in is enterprise sales-gated *and* returns zero Islamic Lagos events. Facebook Events has been ungranted since 2018 and is barred by our own guardrail anyway.
 
 Add to `events`:
 
@@ -85,18 +94,24 @@ Add to `events`:
 |---|---|---|
 | `starts_at` / `ends_at` | `timestamptz` | **the unblocker** — required for both sections |
 | `timezone` | `text` | events are local-time things |
-| `latitude` / `longitude` | `double precision` nullable | events currently have no coords at all |
+| `latitude` / `longitude` | `double precision` nullable | events have no coords today, and **no source provides them** — every event pin must come from our own geocoding |
 | `photos` | `text[]` | replaces single `photo`; enables the carousel dots. Keep `photo` during migration, backfill, then drop |
 | `price_min` / `price_max` | `numeric` nullable | null = free or unknown |
 | `currency` | `text` | **NGN default** — do not hardcode `$` as the Figma does |
-| `attendee_count` | `int` nullable | badge hides when null |
+| `attendee_count` | `int` nullable | **no source provides this** — manual entry only. See the design note below. |
+| `category` | `text` nullable | **no source provides this either** — we classify on ingest |
 | `ticket_url` | `text` nullable | |
 | `source` | `text` | `'manual' \| 'eventbrite' \| …` |
 | `external_id` | `text` nullable | + unique index on `(source, external_id)` for idempotent re-ingest |
 
 Validate every external payload with **`zod`** (already installed) at the ingestion boundary. Never trust a third-party shape.
 
-**Source selection is pending research** — see *Owner provides*. Do not commit to a platform's schema until coverage is verified; several event APIs advertise broad catalogues but cannot actually return *other* organizers' events.
+**Two design consequences that change the Figma:**
+
+- **The "5,000 People attending" badge cannot be populated.** No source in the landscape — Bitooqoh, WooCommerce, or otherwise — exposes attendance or interest counts. Either cut the badge, replace it with something we *do* have (price, ticket tiers, organiser, "free"), or accept it only ever renders for hand-entered events. **Owner decision.**
+- **Event categories must be derived.** No source tags events by category, so the "Events Nearby" filter and any event categorisation depend on our own classification at ingest.
+
+**Geocoding:** since no source ships coordinates, event pins come from our own Mapbox geocoding — and Mapbox's terms make geocoding *temporary by default*. To store lat/lng in our DB the call **must** use `permanent=true` ($5/1k vs $0.75/1k; negligible at this volume). The schools pipeline already runs Mapbox permanent geocoding — reuse that path rather than writing a second one.
 
 ## States the Figma doesn't show
 
@@ -184,11 +199,12 @@ Items 1–3 are unglamorous and land no visible UI. Doing them after the screen 
 
 ## Owner provides in-chat
 
-1. **Event platform shortlist** — pending research; confirm which 2–3 to integrate first once coverage is verified
-2. **The extra two category tiles** + the pastel tile palette
-3. **Dark palette** values (warm-dark, to match the cream light theme)
-4. **Location-granted and location-denied** row designs
-5. **Empty / loading / error** treatment per section — and whether empty sections hide
-6. **Countdown card** design for the top slot (the Figma only has the no-trip promo)
-7. **Place detail** UI (deferred — separate discussion)
-8. Whether the promo image (Haram at sunset) ships bundled or remote
+1. **Bitooqoh permission** — email them for written API permission before we ship the adapter (research done; they're the recommended primary source)
+2. **The attendance badge** — cut it, replace it, or accept it renders only for hand-entered events (no API provides the data)
+3. **The extra two category tiles** + the pastel tile palette
+4. **Dark palette** values (warm-dark, to match the cream light theme)
+5. **Location-granted and location-denied** row designs
+6. **Empty / loading / error** treatment per section — and whether empty sections hide
+7. **Countdown card** design for the top slot (the Figma only has the no-trip promo)
+8. **Place detail** UI (deferred — separate discussion)
+9. Whether the promo image (Haram at sunset) ships bundled or remote
