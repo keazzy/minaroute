@@ -15,68 +15,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Animated, Easing, Linking, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { G, Path } from 'react-native-svg';
+import { haversineKm } from '@/src/lib/geo';
+import { useEvents, usePlaces, type DiscoveryItem, type Place, type PlaceType } from '@/src/lib/places';
 import { categoryToPlaceType, extractSearchIntent } from '../utils/nlp-search';
 
-const SUPABASE_URL = 'https://spjlyhmgqtkcqhpvgxci.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwamx5aG1ncXRrY3FocHZneGNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MzYzODIsImV4cCI6MjA4MTIxMjM4Mn0.CJz-iTGuoKCmhRQc0vausUPPLR2341GL8JCncMk9i1k';
-
-type PlaceRow = {
-  id: string;
-  name: string;
-  category: string;
-  description: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  tags: string[] | null;
-  photos: string[] | null;
-};
-
-type EventRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  location_name: string | null;
-  city: string | null;
-  state: string | null;
-  photo: string | null;
-  approved: boolean | null;
-  tags: string | null;
-};
-
-type PlaceType = 'Mosque' | 'School' | 'Event' | 'Halal Food';
-
-type Place = {
-  id: string;
-  name: string;
-  address: string;
-  description: string;
-  image: string;
-  type: PlaceType;
-  tags: string[];
-  coordinate: {
-    latitude: number;
-    longitude: number;
-  };
-};
-
-type ListItem =
-  | Place
-  | {
-      id: string;
-      name: string;
-      address: string;
-      description: string;
-      image: string;
-      type: 'Event';
-      tags: string[];
-      city?: string;
-      photos?: string[];
-      coordinate?: null;
-    };
+// Row shapes, mapping and haversine now live in the shared data layer
+// (`@/src/lib/places`, `@/src/lib/geo`) — see docs/home-redesign-brief.md § Step 0.
+type ListItem = DiscoveryItem;
 
 const TYPE_OPTIONS: { label: string; value: PlaceType | 'All' }[] = [
   { label: 'All', value: 'All' },
@@ -157,19 +102,6 @@ function ResultSkeletonCard({ isDark = false }: { isDark?: boolean }) {
       </View>
     </View>
   );
-}
-
-function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
-  const R = 6371;
-  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
-  const dLng = ((b.longitude - a.longitude) * Math.PI) / 180;
-  const lat1 = (a.latitude * Math.PI) / 180;
-  const lat2 = (b.latitude * Math.PI) / 180;
-
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
-  return 2 * R * Math.asin(Math.sqrt(h));
 }
 
 // SVG Icon Components from MingCute
@@ -262,9 +194,9 @@ export default function SearchResultsScreen() {
   const initialSearchQuery = typeof params.searchQuery === 'string' ? params.searchQuery : '';
   const shouldFocus = params.focus === '1';
 
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [events, setEvents] = useState<ListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { places, isLoading: placesLoading } = usePlaces();
+  const { events, isLoading: eventsLoading } = useEvents();
+  const loading = placesLoading || eventsLoading;
   const [searchText, setSearchText] = useState(initialSearchQuery);
   const [nearMe, setNearMe] = useState(false);
   const [nearMePermissionStatus, setNearMePermissionStatus] = useState<ExpoLocation.PermissionStatus | null>(null);
@@ -356,114 +288,6 @@ export default function SearchResultsScreen() {
     inputRange: [0, 1],
     outputRange: [collapsedSheetTop, expandedSheetTop],
   });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchPlaces = async () => {
-      try {
-        setLoading(true);
-
-        const headers = {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          Accept: 'application/json',
-        };
-
-        const placesUrl = `${SUPABASE_URL}/rest/v1/places?select=id,name,category,description,address,city,state,latitude,longitude,tags,photos&order=created_at.desc`;
-        const eventsUrl = `${SUPABASE_URL}/rest/v1/events?select=id,title,description,location_name,city,state,photo,approved,tags&approved=eq.true&order=created_at.desc`;
-
-        const [placesRes, eventsRes] = await Promise.all([
-          fetch(placesUrl, { headers }),
-          fetch(eventsUrl, { headers }),
-        ]);
-
-        if (!placesRes.ok) {
-          throw new Error(`Failed to fetch places (${placesRes.status})`);
-        }
-        if (!eventsRes.ok) {
-          throw new Error(`Failed to fetch events (${eventsRes.status})`);
-        }
-
-        const placeRows = (await placesRes.json()) as PlaceRow[];
-        const eventRows = (await eventsRes.json()) as EventRow[];
-
-        const mappedPlaces: Place[] = placeRows
-          .filter((row) => typeof row.latitude === 'number' && typeof row.longitude === 'number')
-          .map((row) => {
-            const categoryLower = (row.category ?? '').toLowerCase();
-            const type: Exclude<PlaceType, 'Event'> | 'Event' = categoryLower.includes('halal')
-              ? 'Halal Food'
-              : categoryLower.includes('school')
-                ? 'School'
-                : categoryLower.includes('event')
-                  ? 'Event'
-                  : 'Mosque';
-
-            const addressParts = [row.address, row.city, row.state].filter(Boolean) as string[];
-            const address = addressParts.join(', ');
-
-            return {
-              id: row.id,
-              name: row.name,
-              address: address || '',
-              description: row.description ?? '',
-              image: row.photos?.[0] ?? '',
-              type: type as PlaceType,
-              tags: row.tags ?? [],
-              coordinate: {
-                latitude: row.latitude as number,
-                longitude: row.longitude as number,
-              },
-            };
-          });
-
-        const mappedEvents: ListItem[] = eventRows.map((row) => {
-          const addressParts = [row.location_name, row.city, row.state].filter(Boolean) as string[];
-          const address = addressParts.join(', ');
-          const tags = (row.tags ?? '')
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-
-          const photo = typeof row.photo === 'string' ? row.photo.trim() : '';
-
-          return {
-            id: row.id,
-            name: row.title,
-            address,
-            description: row.description ?? '',
-            image: photo,
-            type: 'Event',
-            tags,
-            city: row.city ?? undefined,
-            photos: photo ? [photo] : [],
-            coordinate: null,
-          };
-        });
-
-        if (!cancelled) {
-          setPlaces(mappedPlaces);
-          setEvents(mappedEvents);
-        }
-      } catch {
-        if (!cancelled) {
-          setPlaces([]);
-          setEvents([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchPlaces();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const ensureUserCoords = useCallback(async () => {
     if (userCoords) return;

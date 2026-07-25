@@ -3,9 +3,11 @@ import EventDetailsContent from '@/components/event-details-content';
 import { BottomSheetFlatList, BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import PlaceCard from '@/components/place-card';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
-import { CATEGORIES, Category, Location } from '@/constants/mockData';
+import { CATEGORIES, Category } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
 import { Colors } from '@/constants/theme';
+import { haversineKm } from '@/src/lib/geo';
+import { useEvents, usePlaces, type DiscoveryItem, type Place } from '@/src/lib/places';
 import { useFocusEffect } from 'expo-router';
 import * as ExpoLocation from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,70 +31,11 @@ const INITIAL_REGION = {
   longitudeDelta: 0.05,
 };
 
-const SUPABASE_URL = 'https://spjlyhmgqtkcqhpvgxci.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwamx5aG1ncXRrY3FocHZneGNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MzYzODIsImV4cCI6MjA4MTIxMjM4Mn0.CJz-iTGuoKCmhRQc0vausUPPLR2341GL8JCncMk9i1k';
-
 const LOCATION_PERMISSION_SKIP_KEY = 'location_permission_skip_v2';
 
-type PlaceRow = {
-  id: string;
-  name: string;
-  category: string;
-  description: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  tags: string[] | null;
-  photos: string[] | null;
-};
-
-type EventRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  location_name: string | null;
-  city: string | null;
-  state: string | null;
-  photo: string | null;
-  approved: boolean | null;
-  tags: string | null;
-};
-
-type Place = Location & {
-  description: string;
-};
-
-type HomeListItem =
-  | Place
-  | {
-      id: string;
-      name: string;
-      address: string;
-      description: string;
-      distance: '';
-      type: 'Event';
-      tags: string[];
-      city?: string;
-      photos?: string[];
-      coordinate?: null;
-      image: string;
-    };
-
-function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
-  const R = 6371;
-  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
-  const dLng = ((b.longitude - a.longitude) * Math.PI) / 180;
-  const lat1 = (a.latitude * Math.PI) / 180;
-  const lat2 = (b.latitude * Math.PI) / 180;
-
-  const sinDLat = Math.sin(dLat / 2);
-  const sinDLng = Math.sin(dLng / 2);
-  const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+// Row shapes, mapping and haversine now live in the shared data layer
+// (`@/src/lib/places`, `@/src/lib/geo`) — see docs/home-redesign-brief.md § Step 0.
+type HomeListItem = DiscoveryItem;
 
 // Assets from Figma
 const ASSETS = {
@@ -217,9 +160,8 @@ export default function HomeScreen() {
     placeholderColor: isDark ? '#9BA1A6' : '#6a6c6a',
   }), [isDark]);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [events, setEvents] = useState<HomeListItem[]>([]);
-  const [placesLoading, setPlacesLoading] = useState(true);
+  const { places, isLoading: placesLoading } = usePlaces();
+  const { events } = useEvents();
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Extract<HomeListItem, { type: 'Event' }> | null>(null);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<ExpoLocation.PermissionStatus | null>(null);
@@ -244,7 +186,7 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const handleMarkerPress = useCallback((location: Location) => {
+  const handleMarkerPress = useCallback((location: Place) => {
     setSelectedLocationId(location.id);
     mapRef.current?.animateToRegion({
       latitude: location.coordinate.latitude,
@@ -442,118 +384,12 @@ export default function HomeScreen() {
     });
   }, [deepLinkPlaceId, handleMarkerPress, homeSheetReady, openPlaceDetails, places, placesLoading]);
 
+  // Keep the map selection valid when the shared places cache refreshes.
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchPlaces = async () => {
-      try {
-        setPlacesLoading(true);
-
-        const headers = {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          Accept: 'application/json',
-        };
-
-        const placesUrl = `${SUPABASE_URL}/rest/v1/places?select=id,name,category,description,address,city,state,latitude,longitude,tags,photos&order=created_at.desc`;
-        const eventsUrl = `${SUPABASE_URL}/rest/v1/events?select=id,title,description,location_name,city,state,photo,approved,tags&approved=eq.true&order=created_at.desc`;
-
-        const [placesRes, eventsRes] = await Promise.all([
-          fetch(placesUrl, { headers }),
-          fetch(eventsUrl, { headers }),
-        ]);
-
-        if (!placesRes.ok) {
-          throw new Error(`Failed to fetch places (${placesRes.status})`);
-        }
-        if (!eventsRes.ok) {
-          throw new Error(`Failed to fetch events (${eventsRes.status})`);
-        }
-
-        const rows = (await placesRes.json()) as PlaceRow[];
-        const eventRows = (await eventsRes.json()) as EventRow[];
-
-        const mapped: Place[] = rows
-          .filter((row) => typeof row.latitude === 'number' && typeof row.longitude === 'number')
-          .map((row) => {
-            const categoryLower = (row.category ?? '').toLowerCase();
-            const type: Location['type'] = categoryLower.includes('halal')
-              ? 'Halal Food'
-              : categoryLower.includes('school')
-                ? 'School'
-                : categoryLower.includes('event')
-                  ? 'Event'
-                : 'Mosque';
-
-            const addressParts = [row.address, row.city, row.state].filter(Boolean) as string[];
-            const address = addressParts.join(', ');
-
-            return {
-              id: row.id,
-              name: row.name,
-              address: address || '',
-              description: row.description ?? '',
-              distance: '',
-              type,
-              tags: row.tags ?? [],
-              coordinate: {
-                latitude: row.latitude as number,
-                longitude: row.longitude as number,
-              },
-              image: row.photos?.[0] ?? '',
-            };
-          });
-
-        const mappedEvents: HomeListItem[] = eventRows.map((row) => {
-          const addressParts = [row.location_name, row.city, row.state].filter(Boolean) as string[];
-          const address = addressParts.join(', ');
-          const tags = (row.tags ?? '')
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-
-          const photo = typeof row.photo === 'string' ? row.photo.trim() : '';
-
-          return {
-            id: row.id,
-            name: row.title,
-            address,
-            description: row.description ?? '',
-            distance: '',
-            type: 'Event',
-            tags,
-            city: row.city ?? undefined,
-            photos: photo ? [photo] : [],
-            coordinate: null,
-            image: photo,
-          };
-        });
-
-        if (!cancelled) {
-          setPlaces(mapped);
-          setEvents(mappedEvents);
-          setSelectedLocationId((current) =>
-            current && !mapped.some((p) => p.id === current) ? null : current
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setPlaces([]);
-          setEvents([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setPlacesLoading(false);
-        }
-      }
-    };
-
-    fetchPlaces();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setSelectedLocationId((current) =>
+      current && !places.some((p) => p.id === current) ? null : current
+    );
+  }, [places]);
 
   useEffect(() => {
     let cancelled = false;

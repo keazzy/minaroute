@@ -49,7 +49,7 @@ No caching library is installed (`react-query`/`SWR` are absent). Either add one
 
 **Migrate the existing four screens onto the hooks in the same pass.** Leaving them on raw `fetch` recreates the problem this step exists to solve.
 
-*Separate, not blocking:* confirm RLS is enabled on `places` and `events`. The anon key is public by design; RLS is what actually protects the data.
+*Already verified:* the RLS audit of 2026-07-24 (see `docs/build-log.md`) confirms `places` has RLS on with public read and admin-only writes, and `events` public-reads only `approved=true`. The anon key is public by design; RLS is what protects the data, and it is in place.
 
 ## Data gaps and how we close them
 
