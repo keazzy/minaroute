@@ -5,6 +5,7 @@ import { HomeSheetContent } from '@/components/HomeSheetContent';
 import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
 import { placesInBounds, SEARCH_THIS_AREA_ENABLED, useSearchThisArea } from '@/hooks/use-search-this-area';
 import { BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
+import { PersistentSheet } from '@/components/PersistentSheet';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
 import { Location } from '@/constants/mockData';
 import * as Storage from '@/constants/storage';
@@ -721,16 +722,15 @@ export default function HomeScreen() {
         style={{ bottom: snapPoints[0] + 12 }}
       />
 
-      {/* Home Sheet with pure SwiftUI content */}
-      <NativeSheet
+      {/* Home sheet — JS-driven so the native tab bar stays visible above it */}
+      <PersistentSheet
         ref={homeSheetRef}
-        index={0}
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
         backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
-        enablePanDownToClose={false}
-        enableOverDrag={false}
         topInset={insets.top}
+        // 49 = UITabBar base height; insets.bottom only covers the home indicator here.
+        bottomInset={insets.bottom + 49}
       >
         <HomeSheetContent
           places={sheetPlaces.map(p => ({
@@ -746,7 +746,7 @@ export default function HomeScreen() {
           onCategoryPress={handleCategoryPress}
           onPlacePress={handlePlacePress}
         />
-      </NativeSheet>
+      </PersistentSheet>
 
       <NativeSheet
         ref={eventDetailsSheetRef}
