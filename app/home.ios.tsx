@@ -728,6 +728,7 @@ export default function HomeScreen() {
         snapPoints={snapPoints}
         onChange={handleSheetChanges}
         backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.sheetBg }]}
+        glassBackground
         topInset={insets.top}
         // 49 = UITabBar base height; insets.bottom only covers the home indicator here.
         bottomInset={insets.bottom + 49}

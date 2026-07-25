@@ -1,7 +1,8 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { forwardRef, ReactNode, useImperativeHandle, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import BottomSheet, { BottomSheetView, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
+import React, { forwardRef, ReactNode, useCallback, useImperativeHandle, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { Glass } from './Glass';
 import type { NativeSheetRef } from './NativeSheet';
 
 type PersistentSheetProps = {
@@ -12,6 +13,12 @@ type PersistentSheetProps = {
   topInset?: number;
   /** Padding so content clears an overlaying native tab bar. */
   bottomInset?: number;
+  /**
+   * Render the sheet chrome as Liquid Glass (iOS 26+) instead of a solid fill,
+   * so whatever sits behind the sheet blurs through it — what the UIKit sheet
+   * gave us for free. Falls back to a translucent fill off iOS 26.
+   */
+  glassBackground?: boolean;
   backgroundStyle?: object;
 };
 
@@ -26,11 +33,31 @@ type PersistentSheetProps = {
  */
 export const PersistentSheet = forwardRef<NativeSheetRef, PersistentSheetProps>(
   function PersistentSheet(
-    { snapPoints, children, onChange, enablePanDownToClose = false, topInset, bottomInset, backgroundStyle },
+    {
+      snapPoints,
+      children,
+      onChange,
+      enablePanDownToClose = false,
+      topInset,
+      bottomInset,
+      glassBackground = false,
+      backgroundStyle,
+    },
     ref,
   ) {
     const sheetRef = useRef<BottomSheet>(null);
     const lastIndexRef = useRef(0);
+
+    // `glassClip` last so it overrides any opaque backgroundColor the caller
+    // passed in backgroundStyle — an opaque fill under the glass defeats it.
+    const renderGlassBackground = useCallback(
+      ({ style }: BottomSheetBackgroundProps) => (
+        <View style={[style, styles.glassClip]}>
+          <Glass style={styles.glassFill} glassStyle="regular" />
+        </View>
+      ),
+      [],
+    );
 
     useImperativeHandle(ref, () => ({
       present: () => sheetRef.current?.snapToIndex(lastIndexRef.current),
@@ -53,6 +80,7 @@ export const PersistentSheet = forwardRef<NativeSheetRef, PersistentSheetProps>(
         enableOverDrag={false}
         topInset={topInset}
         backgroundStyle={backgroundStyle ?? styles.background}
+        backgroundComponent={glassBackground ? renderGlassBackground : undefined}
         handleIndicatorStyle={styles.indicator}
         activeOffsetX={[-15, 15]}
         activeOffsetY={[-5, 5]}
@@ -81,5 +109,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  glassClip: {
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
+  },
+  glassFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
