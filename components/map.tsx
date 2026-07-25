@@ -1,22 +1,30 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-type MapProps = {
-  style?: any;
-  children?: React.ReactNode;
-  [key: string]: any;
-};
+import type { MapViewProps, MarkerProps } from './map-types';
 
-const PROVIDER_DEFAULT = 'default';
-const PROVIDER_GOOGLE = 'google';
+/**
+ * Inert fallback for platforms without a real implementation (map.native.tsx
+ * handles iOS/Android via Mapbox, map.web.tsx handles web via Leaflet).
+ */
 
-function Marker() {
+export type {
+  CameraIdleEvent,
+  CameraMoveEvent,
+  Coordinate,
+  MapBounds,
+  MapViewHandle,
+  MapViewProps,
+  MarkerProps,
+  Region,
+} from './map-types';
+export { isPointInBounds, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from './map-types';
+
+export function Marker(_props: MarkerProps) {
   return null;
 }
 
-export { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE };
-
-export default function MapView({ style }: MapProps) {
+export default function MapView({ style }: MapViewProps) {
   return <View style={[styles.mapFallback, style]} />;
 }
 
