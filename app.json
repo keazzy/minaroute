@@ -81,6 +81,7 @@
       "expo-image",
       "expo-web-browser",
       "expo-maps",
+      "@rnmapbox/maps",
       "expo-sqlite",
       "expo-audio"
     ],

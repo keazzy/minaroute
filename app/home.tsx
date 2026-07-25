@@ -1,5 +1,7 @@
 import CategoryCard from '@/components/CategoryCard';
 import EventDetailsContent from '@/components/event-details-content';
+import { SearchThisAreaButton } from '@/components/SearchThisAreaButton';
+import { placesInBounds, SEARCH_THIS_AREA_ENABLED, useSearchThisArea } from '@/hooks/use-search-this-area';
 import { BottomSheetFlatList, BottomSheetScrollView, NativeSheet, NativeSheetRef } from '@/components/NativeSheet';
 import PlaceCard from '@/components/place-card';
 import { SubmitPlaceSheetContent } from '@/components/SubmitPlaceSheetContent';
@@ -16,7 +18,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActionSheetIOS, Alert, Animated, Easing, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useColorScheme, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapViewHandle } from '../components/map';
+import type { MapBounds, MapViewHandle } from '../components/map';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from '../components/map';
 
 // SwiftUI components from @expo/ui - requires Host wrapper for iOS 26+
@@ -167,6 +169,13 @@ export default function HomeScreen() {
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<ExpoLocation.PermissionStatus | null>(null);
   const [homeSheetReady, setHomeSheetReady] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [areaBounds, setAreaBounds] = useState<MapBounds | null>(null);
+  const {
+    visible: searchAreaVisible,
+    onCameraIdle: handleCameraIdle,
+    markSearched: markAreaSearched,
+    reset: resetSearchArea,
+  } = useSearchThisArea();
 
   // Snap points for the bottom sheet
   const snapPoints = useMemo(() => {
@@ -202,6 +211,8 @@ export default function HomeScreen() {
         accuracy: ExpoLocation.Accuracy.Balanced,
       });
       setUserCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      setAreaBounds(null);
+      resetSearchArea();
       mapRef.current?.animateToRegion({
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
@@ -211,7 +222,7 @@ export default function HomeScreen() {
     } catch {
       // ignore
     }
-  }, []);
+  }, [resetSearchArea]);
 
   const requestForegroundPermission = useCallback(async () => {
     try {
@@ -287,6 +298,7 @@ export default function HomeScreen() {
 
   const handlePlaceDetailsDismiss = useCallback(() => {
     setSelectedPlace(null);
+    setSelectedLocationId(null);
     restoreHomeSheet();
     // Recenter map to user location when closing place details
     if (userCoords && locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED) {
@@ -512,11 +524,27 @@ export default function HomeScreen() {
 
   const homeListItems = useMemo(() => {
     if (placesLoading) return [] as HomeListItem[];
+    // "Search this area": a consumed viewport replaces the near-me list basis.
+    if (areaBounds) {
+      const center = {
+        latitude: (areaBounds.north + areaBounds.south) / 2,
+        longitude: (areaBounds.east + areaBounds.west) / 2,
+      };
+      const areaPlaces = placesInBounds(places, areaBounds).sort(
+        (a, b) => haversineKm(center, a.coordinate) - haversineKm(center, b.coordinate),
+      );
+      return [...(areaPlaces as HomeListItem[]), ...events];
+    }
     if (locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED && userCoords) {
       return [...(nearbyPlaces as HomeListItem[]), ...events];
     }
     return [...(places as HomeListItem[]), ...events];
-  }, [events, locationPermissionStatus, nearbyPlaces, places, placesLoading, userCoords]);
+  }, [areaBounds, events, locationPermissionStatus, nearbyPlaces, places, placesLoading, userCoords]);
+
+  const handleSearchThisArea = useCallback(() => {
+    const idle = markAreaSearched();
+    if (idle) setAreaBounds(idle.bounds);
+  }, [markAreaSearched]);
 
   const renderLocationItem = ({ item }: { item: HomeListItem }) => {
     const distanceLabel = (() => {
@@ -564,6 +592,7 @@ export default function HomeScreen() {
         initialRegion={INITIAL_REGION}
         showsUserLocation={locationPermissionStatus === ExpoLocation.PermissionStatus.GRANTED}
         showsMyLocationButton={false}
+        onCameraIdle={handleCameraIdle}
       >
         {places.map((location) => (
           <Marker
@@ -571,11 +600,20 @@ export default function HomeScreen() {
             coordinate={location.coordinate}
             title={location.name}
             description={location.type}
+            category={location.type}
+            selected={selectedLocationId === location.id}
             onPress={() => handleMarkerPress(location)}
             pinColor={selectedLocationId === location.id ? Colors.light.tint : 'red'}
           />
         ))}
       </MapView>
+
+      {/* "Search this area" pill — appears after panning away, above the collapsed sheet */}
+      <SearchThisAreaButton
+        visible={SEARCH_THIS_AREA_ENABLED && searchAreaVisible && !selectedPlace && !selectedEvent}
+        onPress={handleSearchThisArea}
+        style={{ bottom: snapPoints[0] + 12 }}
+      />
 
       {/* Floating Header */}
       <View style={[styles.headerContainer, { top: insets.top + 10 }]}>
