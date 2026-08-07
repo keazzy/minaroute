@@ -95,7 +95,9 @@ const styles = StyleSheet.create({
     minHeight: BAR_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    // Generous: the price needs room to breathe, and since the button flexes
+    // into whatever is left, a wider gap also stops it dominating the bar.
+    gap: 28,
     paddingHorizontal: 16,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
