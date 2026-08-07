@@ -58,9 +58,15 @@ export default function HomeTab() {
     [router],
   );
 
-  // Events and activities still deep-link to the pin on the Explore map: their
-  // detail screens aren't built, and `events` has neither coordinates nor a
-  // photo array to build them from yet.
+  const openEvent = useCallback(
+    (id: string) => {
+      router.push({ pathname: '/event/[id]', params: { id } });
+    },
+    [router],
+  );
+
+  // Activities still deep-link to the pin on the Explore map — there is no
+  // activities table and no rows, so there is nothing to build a page against.
   const openItem = useCallback(
     (id: string) => {
       router.push({ pathname: '/home', params: { placeId: id } });
@@ -102,7 +108,7 @@ export default function HomeTab() {
             title="Events coming up soon"
             items={PLACEHOLDER_EVENTS}
             size="event"
-            onPressItem={openItem}
+            onPressItem={openEvent}
           />
 
           <SectionCarousel

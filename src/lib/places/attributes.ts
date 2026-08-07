@@ -139,6 +139,58 @@ const CATEGORIES: Record<
   thingsToDo: undefined,
 };
 
+/**
+ * Events get the same treatment, with their own vocabulary.
+ *
+ * These are the facets that actually decide whether someone can attend: who the
+ * event is open to, whether there is childcare, whether it is free. For this
+ * audience "Sisters only" is not a nice-to-have detail — it is the difference
+ * between the event being relevant and not.
+ */
+const eventSchema = z.object({
+  audience: z.enum(['sisters', 'brothers', 'mixed', 'family']).optional(),
+  free_entry: z.boolean().optional(),
+  registration_required: z.boolean().optional(),
+  childcare: z.boolean().optional(),
+  prayer_space: z.boolean().optional(),
+  halal_catering: z.boolean().optional(),
+  parking: z.boolean().optional(),
+  wheelchair_access: z.boolean().optional(),
+  language: z.array(z.string()).optional(),
+});
+
+const AUDIENCE_LABEL: Record<string, string> = {
+  sisters: 'Sisters only',
+  brothers: 'Brothers only',
+  mixed: 'Open to all',
+  family: 'Family friendly',
+};
+
+const EVENT_VOCAB = {
+  schema: eventSchema,
+  display: {
+    free_entry: { label: 'Free entry', kind: 'chip', order: 1 },
+    childcare: { label: 'Childcare', kind: 'chip', order: 2 },
+    prayer_space: { label: 'Prayer space', kind: 'chip', order: 3 },
+    halal_catering: { label: 'Halal catering', kind: 'chip', order: 4 },
+    parking: { label: 'Parking', kind: 'chip', order: 5 },
+    wheelchair_access: { label: 'Wheelchair access', kind: 'chip', order: 6 },
+    registration_required: { label: 'Registration required', kind: 'chip', order: 7 },
+    audience: {
+      label: 'Open to',
+      kind: 'fact',
+      order: 1,
+      format: (v: unknown) => AUDIENCE_LABEL[String(v)] ?? String(v),
+    },
+    language: {
+      label: 'Language',
+      kind: 'fact',
+      order: 2,
+      format: (v: unknown) => (Array.isArray(v) ? v.map(String).map(titleCase).join(', ') : String(v)),
+    },
+  } as Record<string, AttributeDisplay>,
+};
+
 export type ResolvedAttributes = {
   chips: string[];
   facts: { key: string; label: string; value: string }[];
@@ -174,6 +226,18 @@ export function resolveAttributes(
 ): ResolvedAttributes {
   const key = categoryKeyFor(category);
   const entry = key ? CATEGORIES[key] : undefined;
+  return resolveWith(entry, raw);
+}
+
+/** The event vocabulary. Same contract, different keys. */
+export function resolveEventAttributes(raw: unknown): ResolvedAttributes {
+  return resolveWith(EVENT_VOCAB, raw);
+}
+
+function resolveWith(
+  entry: { schema: z.ZodTypeAny; display: Record<string, AttributeDisplay> } | undefined,
+  raw: unknown,
+): ResolvedAttributes {
   if (!entry || !raw || typeof raw !== 'object') return EMPTY;
 
   const parsed = entry.schema.safeParse(raw);

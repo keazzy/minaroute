@@ -17,19 +17,8 @@
  * first was meant to surface. See docs/build-log.md.
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Animated,
-  Platform,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useCallback, useMemo } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { SectionCarousel } from '@/src/components/home/SectionCarousel';
 import { PLACEHOLDER_PLACES } from '@/src/components/home/placeholder-content';
@@ -39,20 +28,18 @@ import { discoveryRadii, useColors } from '@/src/theme/palette';
 import { AttributeChips, DetailSection, ExpandableText, FactList } from '@/src/components/detail/blocks';
 import { ContactLinks } from '@/src/components/detail/ContactLinks';
 import { GALLERY_HEIGHT, PhotoGallery } from '@/src/components/detail/PhotoGallery';
-import { ShareIcon } from '@/src/components/detail/gallery-icons';
 import { StaticMap } from '@/src/components/detail/StaticMap';
+import { StickyActionBar, useStickyBarInset } from '@/src/components/detail/StickyActionBar';
+import { openDirections } from '@/src/components/detail/directions';
 import { placeholderPlace } from '@/src/components/detail/placeholder-place';
+import { useCollapsingHeader } from '@/src/components/detail/useCollapsingHeader';
 import { useDetailType } from '@/src/components/detail/type';
-
-/** Header bar height, excluding the status bar. */
-const BAR = Platform.OS === 'ios' ? 44 : 56;
 
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const c = useColors();
   const type = useDetailType();
-  const insets = useSafeAreaInsets();
 
   const place = useMemo(() => placeholderPlace(id), [id]);
   const { chips, facts } = useMemo(
@@ -60,43 +47,19 @@ export default function PlaceDetailScreen() {
     [place.category, place.attributes],
   );
 
-  // Lazy useState, not useRef: the value is read during render to build the
-  // interpolation, and React Compiler (enabled here) rejects ref reads in render.
-  const [scrollY] = useState(() => new Animated.Value(0));
-
-  // The bar fades in over the last stretch of the gallery, landing solid just
-  // as the gallery's bottom edge meets the bar.
-  const collapseEnd = GALLERY_HEIGHT - (insets.top + BAR);
-  const barOpacity = scrollY.interpolate({
-    inputRange: [Math.max(0, collapseEnd - 80), Math.max(1, collapseEnd)],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
+  const { headerOptions, onScroll } = useCollapsingHeader({
+    title: place.name,
+    mediaHeight: GALLERY_HEIGHT,
   });
 
-  // Icon tint can't be animated — the native header takes a plain colour — so
-  // it flips once at the threshold instead of tracking the fade. Two renders
-  // per traversal, not one per frame.
-  const [collapsed, setCollapsed] = useState(false);
-  const onScroll = useMemo(
-    () =>
-      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-        useNativeDriver: true,
-        listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-          const next = e.nativeEvent.contentOffset.y >= collapseEnd - 40;
-          setCollapsed((prev) => (prev === next ? prev : next));
-        },
-      }),
-    [scrollY, collapseEnd],
+  // Getting there is the job on a place page — someone deciding whether they can
+  // reach a mosque before jama'ah shouldn't have to scroll back to the map.
+  const onDirections = useCallback(
+    () => openDirections(place.latitude, place.longitude, place.name),
+    [place.latitude, place.longitude, place.name],
   );
 
-  const onShare = useCallback(() => {
-    // No public URL to share yet; shares the name. Swap in a deep link later.
-    Share.share({ message: place.name }).catch(() => undefined);
-  }, [place.name]);
-
-  // Over photography the glyphs must stay white; once the bar is solid they
-  // follow the palette.
-  const tint = collapsed ? c.onBackground : '#FFFFFF';
+  const stickyInset = useStickyBarInset();
 
   const recommendations = useMemo(
     () => PLACEHOLDER_PLACES.filter((p) => p.id !== place.id),
@@ -105,52 +68,10 @@ export default function PlaceDetailScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: c.background }]}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerTintColor: tint,
-          // iOS: chevron only, no "Back" label, per the design.
-          headerBackButtonDisplayMode: 'minimal',
-          headerBackTitle: '',
-          headerTitleAlign: 'center',
-          headerTitle: () => (
-            <Animated.Text
-              numberOfLines={1}
-              style={[type.factValue, { color: c.onBackground, opacity: barOpacity }]}
-            >
-              {place.name}
-            </Animated.Text>
-          ),
-          headerBackground: () => (
-            <Animated.View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  opacity: barOpacity,
-                  backgroundColor: c.background,
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: c.border,
-                },
-              ]}
-            />
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={onShare}
-              accessibilityRole="button"
-              accessibilityLabel={`Share ${place.name}`}
-              testID="detail-share"
-              hitSlop={12}
-            >
-              <ShareIcon color={tint} />
-            </Pressable>
-          ),
-        }}
-      />
+      <Stack.Screen options={headerOptions} />
 
       <Animated.ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
+        contentContainerStyle={{ paddingBottom: stickyInset + 24 }}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -215,6 +136,13 @@ export default function PlaceDetailScreen() {
           />
         </View>
       </Animated.ScrollView>
+
+      <StickyActionBar
+        actionLabel="Get directions"
+        accessibilityLabel={`Get directions to ${place.name}`}
+        onAction={onDirections}
+        testID="place-cta"
+      />
     </View>
   );
 }

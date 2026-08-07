@@ -11,7 +11,9 @@
  *     Mapbox migration is still waiting on an EAS build.
  *
  * Tapping opens Apple/Google Maps for turn-by-turn, which is the actual job when
- * someone is deciding whether they can reach a mosque before jama'ah.
+ * someone is deciding whether they can reach a mosque before jama'ah. It carries
+ * no button of its own — the sticky action bar owns that action prominently, and
+ * two identical CTAs on one screen is noise.
  *
  * TOKEN: Expo only inlines `EXPO_PUBLIC_*` vars into the client bundle. The repo
  * currently defines `MAPBOX_ACCESS_TOKEN`, which the app cannot read at runtime —
@@ -21,10 +23,11 @@
  */
 import { Image } from 'expo-image';
 import React, { useCallback } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { discoveryRadii, useColors, useIsDark } from '@/src/theme/palette';
 
+import { openDirections } from './directions';
 import { useDetailType } from './type';
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN;
@@ -54,17 +57,6 @@ function staticMapUrl(opts: {
     `https://api.mapbox.com/styles/v1/${style}/static/${pin}/${box}` +
     `/${Math.round(opts.width)}x${Math.round(opts.height)}@2x?access_token=${TOKEN}`
   );
-}
-
-/** Opens the platform's maps app with directions to the destination. */
-function openDirections(lat: number, lng: number, label: string) {
-  const encoded = encodeURIComponent(label);
-  const url = Platform.select({
-    ios: `http://maps.apple.com/?daddr=${lat},${lng}&q=${encoded}`,
-    android: `geo:${lat},${lng}?q=${lat},${lng}(${encoded})`,
-    default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-  });
-  if (url) Linking.openURL(url).catch(() => undefined);
 }
 
 export function StaticMap({ latitude, longitude, label, height = 160, zoom = 14 }: StaticMapProps) {
@@ -101,9 +93,6 @@ export function StaticMap({ latitude, longitude, label, height = 160, zoom = 14 
         </View>
       )}
 
-      <View style={[styles.cta, { backgroundColor: c.surface, borderColor: c.border }]}>
-        <Text style={[type.chip, { color: c.onBackground }]}>Get directions</Text>
-      </View>
     </Pressable>
   );
 }
@@ -113,15 +102,6 @@ const styles = StyleSheet.create({
     borderRadius: discoveryRadii.card,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
   },
   fallback: { alignItems: 'center', justifyContent: 'center', padding: 16 },
-  cta: {
-    margin: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: discoveryRadii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
 });
