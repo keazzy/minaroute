@@ -17,8 +17,18 @@
  * first was meant to surface. See docs/build-log.md.
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Animated, Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Animated,
+  Platform,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SectionCarousel } from '@/src/components/home/SectionCarousel';
@@ -50,7 +60,9 @@ export default function PlaceDetailScreen() {
     [place.category, place.attributes],
   );
 
-  const scrollY = useRef(new Animated.Value(0)).current;
+  // Lazy useState, not useRef: the value is read during render to build the
+  // interpolation, and React Compiler (enabled here) rejects ref reads in render.
+  const [scrollY] = useState(() => new Animated.Value(0));
 
   // The bar fades in over the last stretch of the gallery, landing solid just
   // as the gallery's bottom edge meets the bar.
@@ -69,7 +81,7 @@ export default function PlaceDetailScreen() {
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
         useNativeDriver: true,
-        listener: (e: any) => {
+        listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
           const next = e.nativeEvent.contentOffset.y >= collapseEnd - 40;
           setCollapsed((prev) => (prev === next ? prev : next));
         },
