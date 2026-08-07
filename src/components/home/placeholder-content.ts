@@ -86,14 +86,21 @@ export const PLACEHOLDER_PLACES: DiscoveryCardItem[] = [
   },
 ];
 
-/** "Events coming up soon" — attendance badge, tall poster imagery. */
+/**
+ * "Events coming up soon" — tall poster imagery, no badge.
+ *
+ * Attendance counts are deliberately switched off (owner decision, 2026-08-07).
+ * The card still supports a badge, so turning it back on is a data question, not
+ * a UI one — but there is no honest number to put there yet: Minaroute does not
+ * host RSVPs, so any figure would be either copied off the organiser's poster
+ * (a marketing claim) or a real in-app count that reads as "nobody is going"
+ * for the first months. See the brief's note on cold-start social proof.
+ */
 export const PLACEHOLDER_EVENTS: DiscoveryCardItem[] = [
   {
     id: 'e1',
     title: 'Single & Secure 3.0 — Love in the Age of Algorithm',
     images: [IMG.eventSingleAndSecure, IMG.souqWaqif, IMG.foodBuffet],
-    badgeValue: '5,000',
-    badgeCaption: 'People attending',
     footerLead: 'Shodex Garden, Ilupeju · 9 Aug',
     footerValue: 'from ₦7,500',
   },
@@ -101,8 +108,6 @@ export const PLACEHOLDER_EVENTS: DiscoveryCardItem[] = [
     id: 'e2',
     title: 'Muslim Tech Expo Kenya 2026',
     images: [IMG.eventMuslimTechExpo, IMG.schoolLaptop, IMG.mosqueDome],
-    badgeValue: '652',
-    badgeCaption: 'People attending',
     footerLead: 'Nairobi · 12 Sep',
     footerValue: 'Free',
   },
@@ -117,8 +122,6 @@ export const PLACEHOLDER_EVENTS: DiscoveryCardItem[] = [
     id: 'e4',
     title: 'MSSN Lagos 115th Islamic Vacation Course',
     images: [IMG.schoolOutdoors, IMG.schoolLecture, IMG.mosqueSuleymaniye],
-    badgeValue: '1,200',
-    badgeCaption: 'People attending',
     footerLead: 'Epe · 25 Dec',
     footerValue: 'from ₦9,000',
   },
