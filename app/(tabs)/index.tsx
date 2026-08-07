@@ -51,9 +51,16 @@ export default function HomeTab() {
     [router],
   );
 
-  // Card taps deep-link to the pin on the Explore map until the place detail
-  // screen exists (deferred — owner is providing that UI separately). Keeping
-  // this in one place makes swapping the destination a one-line change.
+  const openPlace = useCallback(
+    (id: string) => {
+      router.push({ pathname: '/place/[id]', params: { id } });
+    },
+    [router],
+  );
+
+  // Events and activities still deep-link to the pin on the Explore map: their
+  // detail screens aren't built, and `events` has neither coordinates nor a
+  // photo array to build them from yet.
   const openItem = useCallback(
     (id: string) => {
       router.push({ pathname: '/home', params: { placeId: id } });
@@ -88,7 +95,7 @@ export default function HomeTab() {
             title="Places around you"
             items={PLACEHOLDER_PLACES}
             size="place"
-            onPressItem={openItem}
+            onPressItem={openPlace}
           />
 
           <SectionCarousel
