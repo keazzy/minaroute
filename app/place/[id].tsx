@@ -7,14 +7,18 @@
  * vocabulary in `src/lib/places/attributes.ts`. Adding a category means adding a
  * schema there, not editing this file.
  *
+ * The header is the **native** stack header, transparent over the gallery and
+ * fading into a solid title bar as it scrolls away — so the back chevron keeps
+ * the system's tint, the iOS edge-swipe affordance, and (per the design) no
+ * back-button label.
+ *
  * UI only — content comes from `placeholder-place.ts`. Wiring this to Supabase
- * needs columns that do not exist yet (rating, attributes, phone, hours), which
- * is exactly what building this page first was meant to surface. See
- * docs/build-log.md.
+ * needs columns that do not exist yet, which is exactly what building this page
+ * first was meant to surface. See docs/build-log.md.
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Animated, Platform, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SectionCarousel } from '@/src/components/home/SectionCarousel';
@@ -23,10 +27,15 @@ import { resolveAttributes } from '@/src/lib/places/attributes';
 import { discoveryRadii, useColors } from '@/src/theme/palette';
 
 import { AttributeChips, DetailSection, ExpandableText, FactList } from '@/src/components/detail/blocks';
-import { PhotoGallery } from '@/src/components/detail/PhotoGallery';
+import { ContactLinks } from '@/src/components/detail/ContactLinks';
+import { GALLERY_HEIGHT, PhotoGallery } from '@/src/components/detail/PhotoGallery';
+import { ShareIcon } from '@/src/components/detail/gallery-icons';
 import { StaticMap } from '@/src/components/detail/StaticMap';
 import { placeholderPlace } from '@/src/components/detail/placeholder-place';
 import { useDetailType } from '@/src/components/detail/type';
+
+/** Header bar height, excluding the status bar. */
+const BAR = Platform.OS === 'ios' ? 44 : 56;
 
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,17 +50,42 @@ export default function PlaceDetailScreen() {
     [place.category, place.attributes],
   );
 
-  const onBack = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)');
-  }, [router]);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-  const onCall = useCallback(() => {
-    if (place.phone) Linking.openURL(`tel:${place.phone.replace(/\s/g, '')}`).catch(() => undefined);
-  }, [place.phone]);
+  // The bar fades in over the last stretch of the gallery, landing solid just
+  // as the gallery's bottom edge meets the bar.
+  const collapseEnd = GALLERY_HEIGHT - (insets.top + BAR);
+  const barOpacity = scrollY.interpolate({
+    inputRange: [Math.max(0, collapseEnd - 80), Math.max(1, collapseEnd)],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
-  // "Other mosques near this one" — category + proximity, which PostGIS already
-  // supports. Not a behavioural signal: there is no traffic to derive one from.
+  // Icon tint can't be animated — the native header takes a plain colour — so
+  // it flips once at the threshold instead of tracking the fade. Two renders
+  // per traversal, not one per frame.
+  const [collapsed, setCollapsed] = useState(false);
+  const onScroll = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+        useNativeDriver: true,
+        listener: (e: any) => {
+          const next = e.nativeEvent.contentOffset.y >= collapseEnd - 40;
+          setCollapsed((prev) => (prev === next ? prev : next));
+        },
+      }),
+    [scrollY, collapseEnd],
+  );
+
+  const onShare = useCallback(() => {
+    // No public URL to share yet; shares the name. Swap in a deep link later.
+    Share.share({ message: place.name }).catch(() => undefined);
+  }, [place.name]);
+
+  // Over photography the glyphs must stay white; once the bar is solid they
+  // follow the palette.
+  const tint = collapsed ? c.onBackground : '#FFFFFF';
+
   const recommendations = useMemo(
     () => PLACEHOLDER_PLACES.filter((p) => p.id !== place.id),
     [place.id],
@@ -59,16 +93,61 @@ export default function PlaceDetailScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: c.background }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerTintColor: tint,
+          // iOS: chevron only, no "Back" label, per the design.
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackTitle: '',
+          headerTitleAlign: 'center',
+          headerTitle: () => (
+            <Animated.Text
+              numberOfLines={1}
+              style={[type.factValue, { color: c.onBackground, opacity: barOpacity }]}
+            >
+              {place.name}
+            </Animated.Text>
+          ),
+          headerBackground: () => (
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: barOpacity,
+                  backgroundColor: c.background,
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: c.border,
+                },
+              ]}
+            />
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={onShare}
+              accessibilityRole="button"
+              accessibilityLabel={`Share ${place.name}`}
+              testID="detail-share"
+              hitSlop={12}
+            >
+              <ShareIcon color={tint} />
+            </Pressable>
+          ),
+        }}
+      />
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        // The gallery sits under the transparent header by design.
+        contentInsetAdjustmentBehavior="never"
       >
-        <PhotoGallery images={place.photos} title={place.name} onBack={onBack} />
+        <PhotoGallery images={place.photos} />
 
         <View style={styles.body}>
-          {/* Title block */}
           <View style={styles.titleBlock}>
             <Text style={[type.eyebrow, { color: c.onBackgroundMuted }]}>{place.categoryLabel}</Text>
             <Text style={[type.title, { color: c.onBackground }]}>{place.name}</Text>
@@ -101,11 +180,7 @@ export default function PlaceDetailScreen() {
           ) : null}
 
           <DetailSection title="Location">
-            <StaticMap
-              latitude={place.latitude}
-              longitude={place.longitude}
-              label={place.name}
-            />
+            <StaticMap latitude={place.latitude} longitude={place.longitude} label={place.name} />
             <Text style={[type.bodySmall, { color: c.onBackgroundMuted }]}>
               {place.address}, {place.city}
             </Text>
@@ -117,32 +192,9 @@ export default function PlaceDetailScreen() {
             </DetailSection>
           ) : null}
 
-          {place.phone || place.website ? (
-            <DetailSection title="Contact">
-              <View style={styles.contactRow}>
-                {place.phone ? (
-                  <Pressable
-                    onPress={onCall}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Call ${place.name}`}
-                    style={[styles.contactPill, { borderColor: c.border, backgroundColor: c.surfaceMuted }]}
-                  >
-                    <Text style={[type.chip, { color: c.onBackground }]}>{place.phone}</Text>
-                  </Pressable>
-                ) : null}
-                {place.website ? (
-                  <Pressable
-                    onPress={() => Linking.openURL(place.website!).catch(() => undefined)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open the website for ${place.name}`}
-                    style={[styles.contactPill, { borderColor: c.border, backgroundColor: c.surfaceMuted }]}
-                  >
-                    <Text style={[type.chip, { color: c.onBackground }]}>Website</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            </DetailSection>
-          ) : null}
+          <DetailSection title="Contact">
+            <ContactLinks contacts={place.contacts} />
+          </DetailSection>
 
           <SectionCarousel
             title="Similar places nearby"
@@ -150,7 +202,7 @@ export default function PlaceDetailScreen() {
             onPressItem={(nextId) => router.push({ pathname: '/place/[id]', params: { id: nextId } })}
           />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -160,16 +212,5 @@ const styles = StyleSheet.create({
   body: { paddingTop: 20, gap: 28 },
   titleBlock: { paddingHorizontal: 16, gap: 8 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  badge: {
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: discoveryRadii.badge,
-  },
-  contactRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  contactPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: discoveryRadii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
+  badge: { paddingHorizontal: 7, paddingVertical: 4, borderRadius: discoveryRadii.badge },
 });

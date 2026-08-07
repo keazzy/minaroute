@@ -15,6 +15,8 @@
  */
 import type { ImageSourcePropType } from 'react-native';
 
+import type { Contacts } from './ContactLinks';
+
 export type PlaceDetail = {
   id: string;
   name: string;
@@ -33,8 +35,12 @@ export type PlaceDetail = {
   ratingCount?: number;
   /** Raw jsonb blob, validated per category at render time. */
   attributes: Record<string, unknown>;
-  phone?: string;
-  website?: string;
+  /**
+   * Sparse — only the channels a place actually has. Social handles are stored
+   * bare ("minaroute"), never as full profile URLs, so they can be shown as
+   * @handle and still validated. Each is its own column in the migration.
+   */
+  contacts: Contacts;
   /** Free text for now; a structured weekly schedule is a later migration. */
   openingHours?: string;
 };
@@ -79,7 +85,12 @@ export const PLACEHOLDER_PLACES_BY_ID: Record<string, PlaceDetail> = {
       wheelchair_access: false,
       capacity: 400,
     },
-    phone: '+234 802 345 6789',
+    // No website or Facebook — proves the block renders only what exists.
+    contacts: {
+      phone: '+234 802 345 6789',
+      whatsapp: '+234 802 345 6789',
+      instagram: 'mosadoluwa.mosque',
+    },
     openingHours: 'Open daily, 5:00 am – 9:30 pm',
   },
 
@@ -107,8 +118,15 @@ export const PLACEHOLDER_PLACES_BY_ID: Record<string, PlaceDetail> = {
       fees_from: 85000,
       admission_open: false,
     },
-    phone: '+234 803 987 6543',
-    website: 'https://example.org',
+    // The fuller case — a school office runs every channel.
+    contacts: {
+      phone: '+234 803 987 6543',
+      whatsapp: '+234 803 987 6543',
+      email: 'admissions@usoolul-iman.edu.ng',
+      website: 'https://usoolul-iman.edu.ng',
+      instagram: 'usooluliman',
+      facebook: 'usoolulimanschool',
+    },
     openingHours: 'Mon – Fri, 7:30 am – 4:00 pm',
   },
 };
