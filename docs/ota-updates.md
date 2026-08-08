@@ -10,55 +10,62 @@ the difference between a 20-minute build-and-review cycle and about 60 seconds.
 |---|---|
 | `expo-updates` | `~57.0.8`, installed |
 | Update URL | `https://u.expo.dev/984fc7a4-af4a-4a43-813a-0e0fdfc614ff` |
-| `runtimeVersion` | `{ "policy": "appVersion" }` — runtime version is `1.0.0` |
+| `runtimeVersion` | **`{ "policy": "fingerprint" }`** — currently `2286a457e8bd5f901b597e70d16e3ec401d113fe` |
 | Channels | `development`, `preview`, `production` — each set on the matching `eas.json` build profile |
 
-## Runtime version policy — and a failed attempt at `fingerprint`
+## Runtime version policy
 
-Currently `appVersion`: the runtime version is the app version, `1.0.0`. Any
-build with that version can receive any update built for it.
+`fingerprint`: the runtime version is a hash of the actual native inputs, so an
+update only reaches binaries whose native side matches. Incompatible updates are
+never offered, rather than shipped and crashed — which is what `appVersion`
+allows, since under it every build sharing a version number looks compatible.
 
-**Known limitation.** Change something native, rebuild without bumping
-`version`, and an update built afterwards is still offered to older `1.0.0`
-binaries that lack the native side. The JS expects a module that isn't there and
-breaks at runtime. Guard against this by bumping `version` whenever native
-config changes — which is worth doing anyway.
+### The trap that cost three builds
 
-**`fingerprint` was tried on 2026-08-08 and reverted after three failed builds**
-(EAS builds 3, 4 and 5), all with:
+Builds 3–5 failed with:
 
 ```
 Runtime version calculated on local machine not equal to runtime version
 calculated during build.
 ```
 
-What was ruled out along the way, each by measurement rather than inference:
+**Cause: `app.config.ts` injects `extra.mapboxAccessToken` from
+`process.env.MAPBOX_ACCESS_TOKEN`.** That variable was in `.env.local` but had
+never been set in the EAS `production` or `preview` environments. So locally the
+key was present in the resolved config and on EAS it was absent entirely — two
+different configs, two different hashes.
 
-- **Local `ios/`/`android/` present but absent on the builder** — not the cause.
-  Those directories are gitignored, so fingerprint excludes them; the
-  `bareNativeDir` source carries `hash: null` and removing the folders left the
-  hash byte-identical.
-- **Version fields hashed into the config** — real, and confirmed (adding a
-  build number locally changed the hash), which matters because `autoIncrement`
-  assigns build numbers server-side. `sourceSkips: ['ExpoConfigVersions']` in a
-  `fingerprint.config.js` fixed it and the hash went stable across `version` and
-  `buildNumber` edits. Build 4 still failed, so this was not the blocker.
-- **`node_modules` drifted from `package-lock.json`** — real and worth fixing on
-  its own (`react-native` 0.86.0 vs 0.86.2, `expo-updates` 57.0.8 vs 57.0.12, an
-  invalid `expo-image`, six extraneous packages). EAS runs `npm ci`, so the two
-  sides genuinely had different trees. **That fix is kept** — see the lockfile
-  commit. Build 5 still failed.
+Fixed by `eas env:create --name MAPBOX_ACCESS_TOKEN` for production and preview.
+It already existed in `development`, which is why the July development build
+succeeded while every production build failed.
 
-So something else still diverges, and it has not been identified. The next step
-is not another guess: get the **server-computed** fingerprint from the build log
-(expand the *Configure expo-updates* step — EAS prints both hashes, and usually
-the differing sources) and diff it against
-`npx expo-updates fingerprint:generate --platform ios`. `eas fingerprint:compare
---build-id <id>` is not sufficient on its own: it compares local against the
-value the **CLI** recorded, so it reports a match even for a build that failed.
+**This was also a real shipping bug, independent of fingerprint.** Every
+production EAS build to date resolved `extra.mapboxAccessToken` to `undefined`,
+so the Mapbox discovery map had no token in TestFlight.
 
-Until then `appVersion` is what ships — it is what the app has always used and
-what every successful build to date has used.
+**The rule this leaves:** any environment variable that feeds app config must
+exist in *both* `.env.local` and the EAS environment. Today that is
+`MAPBOX_ACCESS_TOKEN` and `GOOGLE_MAPS_KEY`. Adding another to `app.config.ts`
+without adding it to EAS reproduces this failure exactly.
+
+### Two other things fixed along the way
+
+- **`fingerprint.config.js`** sets `sourceSkips: ['ExpoConfigVersions']`. The
+  `production` profile uses `autoIncrement`, so EAS assigns the build number
+  server-side; without the skip, version fields alone would diverge the hash.
+  Confirmed by measurement.
+- **`package-lock.json` had drifted from `node_modules`** (`react-native` 0.86.0
+  vs 0.86.2, `expo-updates` 57.0.8 vs 57.0.12, an invalid `expo-image`, six
+  extraneous packages). EAS runs `npm ci`, so it was building a different tree.
+
+### How to diagnose this class of failure
+
+Expand **Configure expo-updates** in the build log. EAS prints both hashes *and*
+a JSON diff of the differing sources — that diff named the cause immediately.
+
+Do not rely on `eas fingerprint:compare --build-id`: it compares local against
+the value the **CLI** recorded, so it reports a match even for a build that
+failed on this exact error.
 
 ## Publishing an update
 
