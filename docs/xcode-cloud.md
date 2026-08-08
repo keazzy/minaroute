@@ -1,5 +1,23 @@
 # Xcode Cloud → TestFlight: step by step
 
+> **Parked — EAS is the route to use today.** `eas.json`'s `production` profile
+> already has `autoIncrement: true` with `appVersionSource: remote`, so EAS
+> manages build numbers itself, and the app has shipped to TestFlight through it
+> before. One command does build + submit:
+>
+> ```bash
+> eas build --platform ios --profile production --auto-submit
+> ```
+>
+> Everything below stays valid, and is worth doing when one of these becomes
+> true: you want a build per PR with tests in CI, EAS build costs start to bite
+> at higher frequency, or you want less dependency on Expo's infrastructure.
+> The Apple Developer Program includes 25 compute hours a month.
+>
+> **Whichever route you take, set `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` first** —
+> `.env.local` is gitignored and travels with neither. Without it the build
+> succeeds and every map renders the fallback. See Step 4.
+
 Getting the current UI in front of testers without EAS. The app is **already on
 TestFlight** (built with EAS previously), so the App Store Connect record exists
 and some steps in generic guides don't apply here.
