@@ -30,7 +30,34 @@ inputs — config plugins, native dependencies, app config. An update only reach
 binaries whose native side matches. Incompatible updates are simply not offered
 rather than shipped and crashed.
 
-Current fingerprint (iOS): `877036407076f966a65cc5a344d19716662655bd`
+Current fingerprint (iOS): `b2ff0437d9749e721f3104d4122dfabf15835ecb`
+
+### `fingerprint.config.js` is required, not optional
+
+The first build under this policy **failed**:
+
+```
+Runtime version calculated on local machine not equal to
+runtime version calculated during build.
+```
+
+Cause: the `production` profile uses `autoIncrement: true` with
+`appVersionSource: "remote"`, so EAS assigns the build number **on its servers**.
+By default the fingerprint hashes the whole resolved Expo config including
+version fields, so the local hash (no build number yet) could never match the
+build-time hash (build number assigned). Confirmed by measurement — adding a
+build number locally changed the hash.
+
+`fingerprint.config.js` sets `sourceSkips: ['ExpoConfigVersions']`, which
+excludes `version`, `ios.buildNumber` and `android.versionCode` from the hash.
+That is the correct fix rather than a workaround: those fields say nothing about
+**native compatibility**, which is the only thing a runtime version needs to
+express. Two builds differing only by build number can safely share an update.
+
+Verified stable: the hash is unchanged across `buildNumber` and `version` edits.
+If you ever see that error again, something else config-shaped is differing
+between your machine and the build — start by diffing `npx expo config --type
+public` locally against the build log's copy.
 
 **Consequence:** the existing TestFlight build was made under the `appVersion`
 policy and will never receive fingerprint-based updates. That's fine — it
