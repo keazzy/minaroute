@@ -37,25 +37,38 @@ echo "--- JS dependencies ---"
 npm ci
 
 echo "--- Build number ---"
-# Managed workflow: the build number is baked into Info.plist at prebuild time,
-# so it has to be set *before* prebuild runs. Xcode Cloud's monotonically
-# increasing CI_BUILD_NUMBER is exactly what App Store Connect wants — every
-# TestFlight upload needs a build number it has not seen before.
+# The build number is baked into Info.plist when the project is generated, so it
+# has to be set before prebuild runs.
+#
+# IMPORTANT: this app already has TestFlight builds from EAS, and Xcode Cloud's
+# CI_BUILD_NUMBER restarts at 1 for a new workflow. App Store Connect rejects an
+# upload whose build number is not higher than the last one for that version, so
+# a fresh workflow would be rejected immediately. Set BUILD_NUMBER_OFFSET as a
+# workflow variable to something above the highest existing EAS build number.
 if [ -n "$CI_BUILD_NUMBER" ]; then
-  node -e "
+  OFFSET="${BUILD_NUMBER_OFFSET:-0}"
+  RESOLVED=$((CI_BUILD_NUMBER + OFFSET))
+  RESOLVED="$RESOLVED" node -e "
     const fs = require('fs');
     const p = 'app.json';
     const c = JSON.parse(fs.readFileSync(p, 'utf8'));
     c.expo.ios = c.expo.ios || {};
-    c.expo.ios.buildNumber = String(process.env.CI_BUILD_NUMBER);
+    c.expo.ios.buildNumber = String(process.env.RESOLVED);
     fs.writeFileSync(p, JSON.stringify(c, null, 2) + '\n');
     console.log('buildNumber =', c.expo.ios.buildNumber);
   "
 fi
 
-echo "--- Generating the iOS project ---"
-# --no-install so pod install runs below with the locale set above.
-npx expo prebuild --platform ios --no-install
+echo "--- iOS project ---"
+# Works whether or not ios/ is committed. If it is present (the recommended
+# setup, so Xcode Cloud can discover the scheme at clone time), leave it alone —
+# regenerating would discard any native changes made in Xcode.
+if [ -d "ios" ]; then
+  echo "ios/ is committed; skipping prebuild"
+else
+  echo "ios/ not in the repo; generating it"
+  npx expo prebuild --platform ios --no-install
+fi
 
 echo "--- Mapbox SDK credentials (only if configured) ---"
 # @rnmapbox/maps pulls the Mapbox SDK from a private CocoaPods source on some
