@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { LogOut, MapPin, CalendarDays, Inbox } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AppSidebar, type Route } from '@/components/AppSidebar';
+import { Overview } from '@/routes/Overview';
 import { PlacesTable } from '@/routes/PlacesTable';
-
-type Tab = 'places' | 'events' | 'suggestions';
 
 /**
  * Shell + auth gate.
@@ -22,7 +21,8 @@ type Tab = 'places' | 'events' | 'suggestions';
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<Tab>('places');
+  const [route, setRoute] = useState<Route>('overview');
+  const [counts, setCounts] = useState<Partial<Record<Route, number | null>>>({});
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -71,39 +71,20 @@ export default function App() {
     );
   }
 
-  const tabs: { id: Tab; label: string; icon: typeof MapPin }[] = [
-    { id: 'places', label: 'Places', icon: MapPin },
-    { id: 'events', label: 'Events', icon: CalendarDays },
-    { id: 'suggestions', label: 'Suggestions', icon: Inbox },
-  ];
-
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex shrink-0 items-center gap-1 border-b px-3 py-2">
-        <span className="mr-3 text-sm font-semibold">Minaroute Admin</span>
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <Button
-            key={id}
-            size="sm"
-            variant={tab === id ? 'default' : 'ghost'}
-            onClick={() => setTab(id)}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </Button>
-        ))}
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{session.user.email}</span>
-          <Button size="icon" variant="ghost" onClick={() => supabase.auth.signOut()} title="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
-
-      <main className="min-h-0 flex-1">
-        {tab === 'places' && <PlacesTable />}
-        {tab === 'events' && <Placeholder name="Events" />}
-        {tab === 'suggestions' && <Placeholder name="Suggestions" />}
+    <div className="flex h-full">
+      <AppSidebar
+        route={route}
+        onNavigate={setRoute}
+        email={session.user.email}
+        counts={counts}
+      />
+      <main className="min-h-0 min-w-0 flex-1">
+        {route === 'overview' && (
+          <Overview onCounts={(c) => setCounts((prev) => ({ ...prev, ...c }))} />
+        )}
+        {route === 'places' && <PlacesTable />}
+        {route === 'events' && <Placeholder name="Events" />}
       </main>
     </div>
   );
