@@ -10,58 +10,55 @@ the difference between a 20-minute build-and-review cycle and about 60 seconds.
 |---|---|
 | `expo-updates` | `~57.0.8`, installed |
 | Update URL | `https://u.expo.dev/984fc7a4-af4a-4a43-813a-0e0fdfc614ff` |
-| `runtimeVersion` | **`{ "policy": "fingerprint" }`** |
+| `runtimeVersion` | `{ "policy": "appVersion" }` — runtime version is `1.0.0` |
 | Channels | `development`, `preview`, `production` — each set on the matching `eas.json` build profile |
 
-## Why `fingerprint` and not `appVersion`
+## Runtime version policy — and a failed attempt at `fingerprint`
 
-This was changed on 2026-08-08, and it matters.
+Currently `appVersion`: the runtime version is the app version, `1.0.0`. Any
+build with that version can receive any update built for it.
 
-Under the previous `appVersion` policy the runtime version was just `1.0.0`, so
-**every** build with that version was considered compatible with every update.
-Change something native — add a permission, a config plugin, a native module —
-rebuild without bumping `version`, and an update built afterwards would still be
-served to older `1.0.0` binaries that lack the native side. The JS expects a
-native module that isn't there and the app breaks at runtime, with nothing in the
-update to explain why.
+**Known limitation.** Change something native, rebuild without bumping
+`version`, and an update built afterwards is still offered to older `1.0.0`
+binaries that lack the native side. The JS expects a module that isn't there and
+breaks at runtime. Guard against this by bumping `version` whenever native
+config changes — which is worth doing anyway.
 
-`fingerprint` derives the runtime version from a hash of the actual native
-inputs — config plugins, native dependencies, app config. An update only reaches
-binaries whose native side matches. Incompatible updates are simply not offered
-rather than shipped and crashed.
-
-Current fingerprint (iOS): `b2ff0437d9749e721f3104d4122dfabf15835ecb`
-
-### `fingerprint.config.js` is required, not optional
-
-The first build under this policy **failed**:
+**`fingerprint` was tried on 2026-08-08 and reverted after three failed builds**
+(EAS builds 3, 4 and 5), all with:
 
 ```
-Runtime version calculated on local machine not equal to
-runtime version calculated during build.
+Runtime version calculated on local machine not equal to runtime version
+calculated during build.
 ```
 
-Cause: the `production` profile uses `autoIncrement: true` with
-`appVersionSource: "remote"`, so EAS assigns the build number **on its servers**.
-By default the fingerprint hashes the whole resolved Expo config including
-version fields, so the local hash (no build number yet) could never match the
-build-time hash (build number assigned). Confirmed by measurement — adding a
-build number locally changed the hash.
+What was ruled out along the way, each by measurement rather than inference:
 
-`fingerprint.config.js` sets `sourceSkips: ['ExpoConfigVersions']`, which
-excludes `version`, `ios.buildNumber` and `android.versionCode` from the hash.
-That is the correct fix rather than a workaround: those fields say nothing about
-**native compatibility**, which is the only thing a runtime version needs to
-express. Two builds differing only by build number can safely share an update.
+- **Local `ios/`/`android/` present but absent on the builder** — not the cause.
+  Those directories are gitignored, so fingerprint excludes them; the
+  `bareNativeDir` source carries `hash: null` and removing the folders left the
+  hash byte-identical.
+- **Version fields hashed into the config** — real, and confirmed (adding a
+  build number locally changed the hash), which matters because `autoIncrement`
+  assigns build numbers server-side. `sourceSkips: ['ExpoConfigVersions']` in a
+  `fingerprint.config.js` fixed it and the hash went stable across `version` and
+  `buildNumber` edits. Build 4 still failed, so this was not the blocker.
+- **`node_modules` drifted from `package-lock.json`** — real and worth fixing on
+  its own (`react-native` 0.86.0 vs 0.86.2, `expo-updates` 57.0.8 vs 57.0.12, an
+  invalid `expo-image`, six extraneous packages). EAS runs `npm ci`, so the two
+  sides genuinely had different trees. **That fix is kept** — see the lockfile
+  commit. Build 5 still failed.
 
-Verified stable: the hash is unchanged across `buildNumber` and `version` edits.
-If you ever see that error again, something else config-shaped is differing
-between your machine and the build — start by diffing `npx expo config --type
-public` locally against the build log's copy.
+So something else still diverges, and it has not been identified. The next step
+is not another guess: get the **server-computed** fingerprint from the build log
+(expand the *Configure expo-updates* step — EAS prints both hashes, and usually
+the differing sources) and diff it against
+`npx expo-updates fingerprint:generate --platform ios`. `eas fingerprint:compare
+--build-id <id>` is not sufficient on its own: it compares local against the
+value the **CLI** recorded, so it reports a match even for a build that failed.
 
-**Consequence:** the existing TestFlight build was made under the `appVersion`
-policy and will never receive fingerprint-based updates. That's fine — it
-predates this redesign entirely. Updates start flowing from the next build.
+Until then `appVersion` is what ships — it is what the app has always used and
+what every successful build to date has used.
 
 ## Publishing an update
 
