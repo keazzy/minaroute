@@ -16,7 +16,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow location while Manasik runs in the background so it can gently let you know when you've reached a rite site — even if the app isn't open. You can always guide yourself manually.",
         "LSApplicationQueriesSchemes": [
           "comgooglemaps",
-          "maps"
+          "maps",
+          "waze"
         ]
       }
     },
