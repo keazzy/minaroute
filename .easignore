@@ -1,0 +1,6 @@
+# The web admin is a separate Vite app deployed on its own — it is never part of
+# an iOS or Android build, and uploading it just slows every EAS build.
+admin-web/
+
+# Docs and scratch material likewise.
+docs/

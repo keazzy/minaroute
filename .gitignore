@@ -44,3 +44,8 @@ app-example
 
 # supabase CLI scratch
 supabase/.temp
+
+# Web admin (separate Vite app)
+admin-web/node_modules
+admin-web/dist
+admin-web/.env.local

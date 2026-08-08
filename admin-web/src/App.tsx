@@ -1,0 +1,170 @@
+import { useCallback, useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { LogOut, MapPin, CalendarDays, Inbox } from 'lucide-react';
+
+import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PlacesTable } from '@/routes/PlacesTable';
+
+type Tab = 'places' | 'events' | 'suggestions';
+
+/**
+ * Shell + auth gate.
+ *
+ * The gate asks the database whether you are an admin via the `is_admin()` RPC
+ * from migration 0006, rather than comparing your email against a list in the
+ * bundle. That matters: the mobile admin's ADMIN_EMAILS check only hides UI, and
+ * never stopped anyone writing. Here the same predicate that guards every RLS
+ * policy also decides what you see, so the UI cannot claim access the database
+ * will refuse.
+ */
+export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [tab, setTab] = useState<Tab>('places');
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setChecking(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setIsAdmin(null);
+      return;
+    }
+    supabase.rpc('is_admin').then(({ data, error }) => {
+      // A missing function means 0006 has not been applied — say so plainly
+      // rather than showing an empty table and letting it look like no data.
+      if (error) {
+        console.error('is_admin() failed — has migration 0006 been applied?', error);
+        setIsAdmin(false);
+        return;
+      }
+      setIsAdmin(Boolean(data));
+    });
+  }, [session]);
+
+  if (checking) return <Centered>Loading…</Centered>;
+  if (!session) return <SignIn />;
+  if (isAdmin === null) return <Centered>Checking access…</Centered>;
+  if (!isAdmin) {
+    return (
+      <Centered>
+        <div className="max-w-md space-y-3 text-center">
+          <p className="font-medium">{session.user.email} is not an admin.</p>
+          <p className="text-sm text-muted-foreground">
+            Admins are listed in the <code>admin_users</code> table. If this is wrong, add the
+            address there — it is the same allowlist the RLS policies use.
+          </p>
+          <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </Button>
+        </div>
+      </Centered>
+    );
+  }
+
+  const tabs: { id: Tab; label: string; icon: typeof MapPin }[] = [
+    { id: 'places', label: 'Places', icon: MapPin },
+    { id: 'events', label: 'Events', icon: CalendarDays },
+    { id: 'suggestions', label: 'Suggestions', icon: Inbox },
+  ];
+
+  return (
+    <div className="flex h-full flex-col">
+      <header className="flex shrink-0 items-center gap-1 border-b px-3 py-2">
+        <span className="mr-3 text-sm font-semibold">Minaroute Admin</span>
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <Button
+            key={id}
+            size="sm"
+            variant={tab === id ? 'default' : 'ghost'}
+            onClick={() => setTab(id)}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </Button>
+        ))}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{session.user.email}</span>
+          <Button size="icon" variant="ghost" onClick={() => supabase.auth.signOut()} title="Sign out">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      <main className="min-h-0 flex-1">
+        {tab === 'places' && <PlacesTable />}
+        {tab === 'events' && <Placeholder name="Events" />}
+        {tab === 'suggestions' && <Placeholder name="Suggestions" />}
+      </main>
+    </div>
+  );
+}
+
+function Placeholder({ name }: { name: string }) {
+  return <Centered>{name} — not built yet.</Centered>;
+}
+
+function Centered({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+      {children}
+    </div>
+  );
+}
+
+function SignIn() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setBusy(true);
+      setError(null);
+      const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (err) setError(err.message);
+      setBusy(false);
+    },
+    [email, password],
+  );
+
+  return (
+    <div className="flex h-full items-center justify-center p-6">
+      <form onSubmit={submit} className="w-full max-w-sm space-y-3">
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold">Minaroute Admin</h1>
+          <p className="text-sm text-muted-foreground">Sign in with your Supabase account.</p>
+        </div>
+        <Input
+          type="email"
+          placeholder="Email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          type="password"
+          placeholder="Password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <Button type="submit" className="w-full" disabled={busy || !email || !password}>
+          {busy ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </div>
+  );
+}
