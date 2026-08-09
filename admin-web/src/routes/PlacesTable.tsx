@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Copy, ExternalLink, MapPin, MoreHorizontal, RefreshCw, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, MapPin, MoreHorizontal, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { DataTable } from '@/components/DataTable';
+import { PlaceEditor } from '@/components/PlaceEditor';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +41,7 @@ export function PlacesTable() {
   const [rows, setRows] = useState<PlaceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,6 +201,11 @@ export function PlacesTable() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel className="max-w-56 truncate">{p.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setEditingId(p.id)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(p.id)}>
                   <Copy className="h-3.5 w-3.5" />
                   Copy ID
@@ -238,6 +245,7 @@ export function PlacesTable() {
   );
 
   return (
+    <>
     <DataTable
       id="places"
       data={rows}
@@ -268,6 +276,14 @@ export function PlacesTable() {
         </Button>
       )}
     />
+    {editingId ? (
+      <PlaceEditor
+        placeId={editingId}
+        onClose={() => setEditingId(null)}
+        onSaved={() => void load()}
+      />
+    ) : null}
+    </>
   );
 }
 

@@ -20,7 +20,8 @@ import { PlacesTable } from '@/routes/PlacesTable';
  */
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [adminCheck, setAdminCheck] = useState<'checking' | 'admin' | 'denied' | 'error'>('checking');
+  const [adminError, setAdminError] = useState<string | null>(null);
   const [route, setRoute] = useState<Route>('overview');
   const [counts, setCounts] = useState<Partial<Record<Route, number | null>>>({});
   const [checking, setChecking] = useState(true);
@@ -34,27 +35,72 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!session) {
-      setIsAdmin(null);
-      return;
-    }
-    supabase.rpc('is_admin').then(({ data, error }) => {
-      // A missing function means 0006 has not been applied — say so plainly
-      // rather than showing an empty table and letting it look like no data.
-      if (error) {
-        console.error('is_admin() failed — has migration 0006 been applied?', error);
-        setIsAdmin(false);
+  /**
+   * Verify admin status against the database.
+   *
+   * "The check failed" and "you are not an admin" are different answers and must
+   * not be collapsed. An earlier version returned false on any error, so a
+   * transient 503 from Supabase told the owner they had lost admin access —
+   * alarming, and wrong. Errors now surface as their own state with a retry.
+   *
+   * Transient upstream errors are retried twice before giving up, because they
+   * usually clear within a second.
+   */
+  const checkAdmin = useCallback(async () => {
+    setAdminCheck('checking');
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data, error } = await supabase.rpc('is_admin');
+      if (!error) {
+        setAdminCheck(data ? 'admin' : 'denied');
         return;
       }
-      setIsAdmin(Boolean(data));
-    });
-  }, [session]);
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        continue;
+      }
+      console.error('is_admin() failed', error);
+      setAdminError(error.message);
+      setAdminCheck('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setAdminCheck('checking');
+      return;
+    }
+    void checkAdmin();
+  }, [session, checkAdmin]);
 
   if (checking) return <Centered>Loading…</Centered>;
   if (!session) return <SignIn />;
-  if (isAdmin === null) return <Centered>Checking access…</Centered>;
-  if (!isAdmin) {
+  if (adminCheck === 'checking') return <Centered>Checking access…</Centered>;
+
+  // Could not reach the database. Say exactly that — do not imply the account
+  // lost access, which is what a failed check used to look like.
+  if (adminCheck === 'error') {
+    return (
+      <Centered>
+        <div className="max-w-md space-y-3 text-center">
+          <p className="font-medium text-foreground">Couldn’t verify your access.</p>
+          <p className="text-sm">
+            The database didn’t answer. This is usually temporary — your account is fine.
+          </p>
+          {adminError ? (
+            <p className="font-mono text-xs break-words opacity-70">{adminError}</p>
+          ) : null}
+          <div className="flex justify-center gap-2">
+            <Button onClick={() => void checkAdmin()}>Try again</Button>
+            <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </Centered>
+    );
+  }
+
+  if (adminCheck === 'denied') {
     return (
       <Centered>
         <div className="max-w-md space-y-3 text-center">

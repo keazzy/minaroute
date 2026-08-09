@@ -29,6 +29,24 @@ export type PlaceCategoryKey = 'mosques' | 'learning' | 'food' | 'stays' | 'thin
 
 export type AttributeKind = 'chip' | 'fact';
 
+/**
+ * What control edits this attribute.
+ *
+ * Declared here rather than in the admin so the two cannot drift: if the admin
+ * restated this list, it could write a field the app never renders, or the app
+ * could expect one the admin cannot set — and neither fails loudly, it just
+ * silently does not appear. One definition drives both the display and the form.
+ *
+ * `chip` attributes are always booleans by construction, so they need no
+ * declaration; only `fact` entries carry one.
+ */
+export type AttributeInput =
+  | { control: 'boolean' }
+  | { control: 'text'; placeholder?: string }
+  | { control: 'number'; min?: number; suffix?: string }
+  | { control: 'enum'; options: { value: string; label: string }[] }
+  | { control: 'tags'; suggestions?: string[] };
+
 export type AttributeDisplay = {
   label: string;
   kind: AttributeKind;
@@ -36,6 +54,17 @@ export type AttributeDisplay = {
   order: number;
   /** Renders a `fact` value. Defaults to String(). */
   format?: (value: unknown) => string;
+  /** Editor control. Defaults to a boolean for chips, text for facts. */
+  input?: AttributeInput;
+};
+
+/** A field ready to render in a form: identity, label and control. */
+export type AttributeField = {
+  key: string;
+  label: string;
+  kind: AttributeKind;
+  order: number;
+  input: AttributeInput;
 };
 
 // ---- Schemas ----------------------------------------------------------------
@@ -91,12 +120,18 @@ const CATEGORIES: Record<
       eid_prayers: { label: 'Eid prayers', kind: 'chip', order: 5 },
       wheelchair_access: { label: 'Wheelchair access', kind: 'chip', order: 6 },
       jamaah_times: { label: 'Daily jama‘ah', kind: 'chip', order: 7 },
-      jumuah_time: { label: 'Jumu‘ah', kind: 'fact', order: 1 },
+      jumuah_time: {
+        label: 'Jumu‘ah',
+        kind: 'fact',
+        order: 1,
+        input: { control: 'text', placeholder: '1:30 pm' },
+      },
       capacity: {
         label: 'Capacity',
         kind: 'fact',
         order: 2,
         format: (v) => `${Number(v).toLocaleString('en-NG')} worshippers`,
+        input: { control: 'number', min: 0, suffix: 'worshippers' },
       },
     },
   },
@@ -113,9 +148,29 @@ const CATEGORIES: Record<
         kind: 'fact',
         order: 1,
         format: (v) => (Array.isArray(v) ? v.map(String).map(titleCase).join(', ') : String(v)),
+        input: { control: 'tags', suggestions: ['nursery', 'primary', 'secondary'] },
       },
-      gender: { label: 'Intake', kind: 'fact', order: 2, format: (v) => titleCase(String(v)) },
-      fees_from: { label: 'Fees from', kind: 'fact', order: 3, format: naira },
+      gender: {
+        label: 'Intake',
+        kind: 'fact',
+        order: 2,
+        format: (v) => titleCase(String(v)),
+        input: {
+          control: 'enum',
+          options: [
+            { value: 'boys', label: 'Boys' },
+            { value: 'girls', label: 'Girls' },
+            { value: 'mixed', label: 'Mixed' },
+          ],
+        },
+      },
+      fees_from: {
+        label: 'Fees from',
+        kind: 'fact',
+        order: 3,
+        format: naira,
+        input: { control: 'number', min: 0, suffix: '₦ per term' },
+      },
     },
   },
   food: {
@@ -130,8 +185,15 @@ const CATEGORIES: Record<
         kind: 'fact',
         order: 1,
         format: (v) => (Array.isArray(v) ? v.map(String).map(titleCase).join(', ') : String(v)),
+        input: { control: 'tags', suggestions: ['nigerian', 'lebanese', 'turkish', 'indian'] },
       },
-      price_from: { label: 'From', kind: 'fact', order: 2, format: naira },
+      price_from: {
+        label: 'From',
+        kind: 'fact',
+        order: 2,
+        format: naira,
+        input: { control: 'number', min: 0, suffix: '₦' },
+      },
     },
   },
   // No attribute vocabulary yet — these render the shared spine only.
@@ -181,12 +243,17 @@ const EVENT_VOCAB = {
       kind: 'fact',
       order: 1,
       format: (v: unknown) => AUDIENCE_LABEL[String(v)] ?? String(v),
+      input: {
+        control: 'enum',
+        options: Object.entries(AUDIENCE_LABEL).map(([value, label]) => ({ value, label })),
+      },
     },
     language: {
       label: 'Language',
       kind: 'fact',
       order: 2,
       format: (v: unknown) => (Array.isArray(v) ? v.map(String).map(titleCase).join(', ') : String(v)),
+      input: { control: 'tags', suggestions: ['english', 'yoruba', 'hausa', 'arabic', 'swahili'] },
     },
   } as Record<string, AttributeDisplay>,
 };
@@ -232,6 +299,66 @@ export function resolveAttributes(
 /** The event vocabulary. Same contract, different keys. */
 export function resolveEventAttributes(raw: unknown): ResolvedAttributes {
   return resolveWith(EVENT_VOCAB, raw);
+}
+
+// ---- Editing ----------------------------------------------------------------
+// The admin renders its attribute form from these. Exported so there is exactly
+// one place that decides a mosque has a jumu'ah time and a school has terms —
+// the app reads it to display, the admin reads it to edit.
+
+function fieldsOf(display: Record<string, AttributeDisplay>): AttributeField[] {
+  return Object.entries(display)
+    .map(([key, d]) => ({
+      key,
+      label: d.label,
+      kind: d.kind,
+      order: d.order,
+      // Chips are booleans by construction; facts default to free text.
+      input: d.input ?? (d.kind === 'chip' ? { control: 'boolean' } : { control: 'text' }),
+    }))
+    .sort((a, b) => (a.kind === b.kind ? a.order - b.order : a.kind === 'fact' ? -1 : 1));
+}
+
+/**
+ * The editable attributes for a place category, facts first then chips.
+ *
+ * Facts lead because they carry the specific answers someone came to record —
+ * the jumu'ah time, the fee — while chips are a quick pass of yes/nos.
+ * An unknown category returns an empty list rather than throwing: it simply has
+ * no vocabulary yet, which is a real and valid state.
+ */
+export function attributeFieldsFor(category: string | null | undefined): AttributeField[] {
+  const key = categoryKeyFor(category);
+  const entry = key ? CATEGORIES[key] : undefined;
+  return entry ? fieldsOf(entry.display) : [];
+}
+
+/** The editable attributes for an event. */
+export function eventAttributeFields(): AttributeField[] {
+  return fieldsOf(EVENT_VOCAB.display);
+}
+
+/**
+ * Validate an attributes object against its category before writing.
+ *
+ * Returns the parsed value on success, or a list of problems. The admin calls
+ * this on save so bad data is refused at the point it is entered rather than
+ * silently failing to render weeks later.
+ */
+export function validateAttributes(
+  category: string | null | undefined,
+  raw: unknown,
+): { ok: true; value: Record<string, unknown> } | { ok: false; errors: string[] } {
+  const key = categoryKeyFor(category);
+  const entry = key ? CATEGORIES[key] : undefined;
+  if (!entry) return { ok: true, value: (raw as Record<string, unknown>) ?? {} };
+
+  const parsed = entry.schema.safeParse(raw ?? {});
+  if (parsed.success) return { ok: true, value: parsed.data as Record<string, unknown> };
+  return {
+    ok: false,
+    errors: parsed.error.issues.map((i) => `${i.path.join('.') || 'value'}: ${i.message}`),
+  };
 }
 
 function resolveWith(
