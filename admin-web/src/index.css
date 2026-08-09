@@ -46,6 +46,19 @@
   border-color: var(--color-border);
 }
 
+/*
+ * The page itself must never scroll. This is an app shell: the sidebar is
+ * fixed, and scrolling belongs to the table body and the overview pane, each of
+ * which manages its own. Without this, any child that overflows its flex parent
+ * also stretches the document, and you get a second scrollbar that drifts into
+ * empty space past the end of the content.
+ */
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);

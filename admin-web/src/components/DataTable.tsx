@@ -164,9 +164,19 @@ export function DataTable<T>({
 
       {/* Rows */}
       <div className="min-h-0 flex-1 overflow-auto">
+        {/*
+          `table-layout: fixed` is load-bearing, not cosmetic. Without it the
+          browser auto-sizes columns to their content, which means:
+            - the declared/resized widths are ignored entirely
+            - `truncate` never truncates, because the cell grows instead
+            - one long address widens a column for all 1,000 rows, pushing the
+              table past its container and producing phantom horizontal scroll
+          With it, the header row's widths are authoritative and everything else
+          follows — which is also what makes column resizing mean anything.
+        */}
         <table
           className="border-collapse text-sm"
-          style={{ width: table.getCenterTotalSize(), minWidth: '100%' }}
+          style={{ width: table.getCenterTotalSize(), minWidth: '100%', tableLayout: 'fixed' }}
         >
           <thead className="sticky top-0 z-10 bg-background shadow-[0_1px_0_var(--color-border)]">
             {table.getHeaderGroups().map((hg) => (
