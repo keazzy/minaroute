@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { PhotosField } from '@/components/PhotosField';
 import type { PlaceRow } from '@/routes/PlacesTable';
 
 /**
@@ -53,6 +54,7 @@ export function PlaceEditor({
 }) {
   const [row, setRow] = useState<EditablePlace | null>(null);
   const [attrs, setAttrs] = useState<Record<string, unknown>>({});
+  const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,7 @@ export function PlaceEditor({
           const r = data as unknown as EditablePlace;
           setRow(r);
           setAttrs((r.attributes as Record<string, unknown>) ?? {});
+          setPhotos(Array.isArray(r.photos) ? r.photos.filter(Boolean) : []);
         }
         setLoading(false);
       });
@@ -133,6 +136,7 @@ export function PlaceEditor({
       facebook: emptyToNull(row.facebook),
       x_handle: emptyToNull(row.x_handle),
       attributes: check.value,
+      photos: photos.length > 0 ? photos : null,
     };
 
     const { error: err } = await supabase.from('places').update(patch).eq('id', row.id);
@@ -218,6 +222,13 @@ export function PlaceEditor({
                     />
                   </Field>
                 </div>
+              </Section>
+
+              <Section
+                title="Photos"
+                hint="The first is the card image. Previews load the real URL, so a broken thumbnail is a broken image in the app."
+              >
+                <PhotosField photos={photos} onChange={setPhotos} />
               </Section>
 
               <Section title="Rating" hint="0–10, one decimal. Leave empty to hide the badge.">
